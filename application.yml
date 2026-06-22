@@ -1,0 +1,12 @@
+spring:
+    datasource:
+        url: jdbc:postgresql://localhost:5432/wallet_api
+        username: wallet
+        password: wallet
+
+    jpa:
+        hibernate:
+            ddl-auto: validate
+
+    flyway:
+        enabled: true
