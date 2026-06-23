@@ -2,20 +2,32 @@ package com.aidana.wallet_api.service;
 
 import com.aidana.wallet_api.DTO.request.LoginUserRequest;
 import com.aidana.wallet_api.DTO.request.RegisterUserRequest;
+import com.aidana.wallet_api.DTO.response.AuthResponse;
 import com.aidana.wallet_api.DTO.response.UserResponse;
+import com.aidana.wallet_api.entity.RefreshToken;
 import com.aidana.wallet_api.entity.User;
+import com.aidana.wallet_api.repository.RefreshTokenRepository;
 import com.aidana.wallet_api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+
+    @Value("${jwt.refresh-token-expiration-days}")
+    private long refreshTokenExpirationDays;
 
     public UserResponse register(RegisterUserRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -35,7 +47,7 @@ public class AuthService {
         return new UserResponse(user);
     }
 
-    public UserResponse login(LoginUserRequest request) {
+    public AuthResponse login(LoginUserRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BadCredentialsException("User with this email doesn't exist"));
 
@@ -43,6 +55,20 @@ public class AuthService {
             throw new BadCredentialsException("Invalid credentials");
         }
 
-        return new UserResponse(user);
+        String generatedRefreshToken = jwtService.generateRefreshToken();
+
+        RefreshToken refreshToken = new RefreshToken();
+
+        refreshToken.setUser(user);
+        refreshToken.setTokenHash(generatedRefreshToken);
+        refreshToken.setCreatedAt(Instant.now());
+        refreshToken.setExpiresAt(Instant.now().plus(refreshTokenExpirationDays, ChronoUnit.DAYS));
+
+        refreshTokenRepository.save(refreshToken);
+
+        return new AuthResponse(
+                jwtService.generateAccessToken(user),
+                generatedRefreshToken
+        );
     }
 }
