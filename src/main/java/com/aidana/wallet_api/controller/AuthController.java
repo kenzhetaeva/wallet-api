@@ -1,6 +1,8 @@
 package com.aidana.wallet_api.controller;
 
+import com.aidana.wallet_api.DTO.request.LoginUserRequest;
 import com.aidana.wallet_api.DTO.request.RegisterUserRequest;
+import com.aidana.wallet_api.DTO.response.AuthResponse;
 import com.aidana.wallet_api.DTO.response.UserResponse;
 import com.aidana.wallet_api.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -16,5 +18,10 @@ public class AuthController {
     @PostMapping("/register")
     public UserResponse registerUser(@RequestBody RegisterUserRequest request) {
         return authService.register(request);
+    }
+
+    @PostMapping("/login")
+    public AuthResponse loginUser(@RequestBody LoginUserRequest request) {
+        return authService.login(request);
     }
 }
