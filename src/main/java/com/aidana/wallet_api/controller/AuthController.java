@@ -1,8 +1,10 @@
 package com.aidana.wallet_api.controller;
 
 import com.aidana.wallet_api.DTO.request.LoginUserRequest;
+import com.aidana.wallet_api.DTO.request.RefreshTokenRequest;
 import com.aidana.wallet_api.DTO.request.RegisterUserRequest;
 import com.aidana.wallet_api.DTO.response.AuthResponse;
+import com.aidana.wallet_api.DTO.response.RefreshResponse;
 import com.aidana.wallet_api.DTO.response.UserResponse;
 import com.aidana.wallet_api.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -23,5 +25,10 @@ public class AuthController {
     @PostMapping("/login")
     public AuthResponse loginUser(@RequestBody LoginUserRequest request) {
         return authService.login(request);
+    }
+
+    @PostMapping("/refresh")
+    public RefreshResponse refreshToken(@RequestBody RefreshTokenRequest request) {
+        return authService.refreshToken(request);
     }
 }
