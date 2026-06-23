@@ -1,5 +1,6 @@
 package com.aidana.wallet_api.controller;
 
+import com.aidana.wallet_api.DTO.response.UserResponse;
 import com.aidana.wallet_api.entity.User;
 import com.aidana.wallet_api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +17,9 @@ public class UserController {
     private final UserRepository userRepository;
 
     @GetMapping("/{id}")
-    public User getUser(@PathVariable Long id) {
-        return userRepository.findById(id).orElseThrow();
+    public UserResponse getUser(@PathVariable Long id) {
+        User user = userRepository.findById(id).orElseThrow();
+
+        return new UserResponse(user);
     }
 }

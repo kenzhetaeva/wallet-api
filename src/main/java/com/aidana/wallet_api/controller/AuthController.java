@@ -1,5 +1,6 @@
 package com.aidana.wallet_api.controller;
 
+import com.aidana.wallet_api.DTO.request.LoginUserRequest;
 import com.aidana.wallet_api.DTO.request.RegisterUserRequest;
 import com.aidana.wallet_api.DTO.response.UserResponse;
 import com.aidana.wallet_api.service.AuthService;
@@ -16,5 +17,10 @@ public class AuthController {
     @PostMapping("/register")
     public UserResponse registerUser(@RequestBody RegisterUserRequest request) {
         return authService.register(request);
+    }
+
+    @PostMapping("/login")
+    public UserResponse loginUser(@RequestBody LoginUserRequest request) {
+        return authService.login(request);
     }
 }

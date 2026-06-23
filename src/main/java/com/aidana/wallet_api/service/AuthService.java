@@ -1,10 +1,12 @@
 package com.aidana.wallet_api.service;
 
+import com.aidana.wallet_api.DTO.request.LoginUserRequest;
 import com.aidana.wallet_api.DTO.request.RegisterUserRequest;
 import com.aidana.wallet_api.DTO.response.UserResponse;
 import com.aidana.wallet_api.entity.User;
 import com.aidana.wallet_api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +30,18 @@ public class AuthService {
 
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        this.userRepository.save(user);
+        userRepository.save(user);
+
+        return new UserResponse(user);
+    }
+
+    public UserResponse login(LoginUserRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BadCredentialsException("User with this email doesn't exist"));
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new BadCredentialsException("Invalid credentials");
+        }
 
         return new UserResponse(user);
     }
