@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -59,7 +60,7 @@ public class AuthService {
             throw new BadCredentialsException("Invalid credentials");
         }
 
-        String generatedRefreshToken = jwtService.generateRefreshToken();
+        String generatedRefreshToken = UUID.randomUUID().toString();
 
         RefreshToken refreshToken = new RefreshToken();
 

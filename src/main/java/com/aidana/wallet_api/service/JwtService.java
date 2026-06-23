@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
@@ -22,22 +21,14 @@ import java.util.Map;
 public class JwtService {
 
     private static final String HMAC_SHA256 = "HmacSHA256";
-    private static final int REFRESH_TOKEN_BYTES = 32;
 
     private final ObjectMapper objectMapper;
-    private final SecureRandom secureRandom = new SecureRandom();
 
     @Value("${jwt.secret}")
     private String jwtSecret;
 
     @Value("${jwt.access-token-expiration-minutes}")
     private long accessTokenExpirationMinutes;
-
-    public String generateRefreshToken() {
-        byte[] tokenBytes = new byte[REFRESH_TOKEN_BYTES];
-        secureRandom.nextBytes(tokenBytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
-    }
 
     public String generateAccessToken(User user) {
         Map<String, Object> header = new LinkedHashMap<>();
