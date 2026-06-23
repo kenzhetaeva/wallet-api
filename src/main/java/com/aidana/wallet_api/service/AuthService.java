@@ -1,13 +1,16 @@
 package com.aidana.wallet_api.service;
 
 import com.aidana.wallet_api.DTO.request.LoginUserRequest;
+import com.aidana.wallet_api.DTO.request.RefreshTokenRequest;
 import com.aidana.wallet_api.DTO.request.RegisterUserRequest;
 import com.aidana.wallet_api.DTO.response.AuthResponse;
+import com.aidana.wallet_api.DTO.response.RefreshResponse;
 import com.aidana.wallet_api.DTO.response.UserResponse;
 import com.aidana.wallet_api.entity.RefreshToken;
 import com.aidana.wallet_api.entity.User;
 import com.aidana.wallet_api.repository.RefreshTokenRepository;
 import com.aidana.wallet_api.repository.UserRepository;
+import com.aidana.wallet_api.util.HashUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -25,6 +28,7 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final HashUtils hashUtils;
 
     @Value("${jwt.refresh-token-expiration-days}")
     private long refreshTokenExpirationDays;
@@ -60,7 +64,7 @@ public class AuthService {
         RefreshToken refreshToken = new RefreshToken();
 
         refreshToken.setUser(user);
-        refreshToken.setTokenHash(generatedRefreshToken);
+        refreshToken.setTokenHash(hashUtils.sha256(generatedRefreshToken));
         refreshToken.setCreatedAt(Instant.now());
         refreshToken.setExpiresAt(Instant.now().plus(refreshTokenExpirationDays, ChronoUnit.DAYS));
 
@@ -70,5 +74,28 @@ public class AuthService {
                 jwtService.generateAccessToken(user),
                 generatedRefreshToken
         );
+    }
+
+    public RefreshResponse refreshToken(RefreshTokenRequest request) {
+        String tokenHash = hashUtils.sha256(request.getRefreshToken());
+
+        RefreshToken refreshToken = refreshTokenRepository.findByTokenHash(tokenHash)
+                .orElseThrow(() -> new BadCredentialsException("Refresh token not found"));
+
+        Instant now = Instant.now();
+
+        if (refreshToken.getRevokedAt() != null) {
+            throw new BadCredentialsException("Refresh token revoked");
+        }
+
+        if (!refreshToken.getExpiresAt().isAfter(now)) {
+            throw new BadCredentialsException("Refresh token expired");
+        }
+
+        String accessToken = jwtService.generateAccessToken(
+            refreshToken.getUser()
+        );
+
+        return new RefreshResponse(accessToken);
     }
 }
