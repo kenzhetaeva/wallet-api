@@ -31,4 +31,12 @@ public class AccountController {
     ) {
         return accountService.getUserAccounts(principal.getUserId());
     }
+
+    @GetMapping("/{accountId}")
+    public AccountResponse getAccount(
+            @PathVariable Long accountId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        return accountService.getAccount(accountId, principal.getUserId());
+    }
 }

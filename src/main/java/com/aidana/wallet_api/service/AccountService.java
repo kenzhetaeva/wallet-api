@@ -21,7 +21,7 @@ public class AccountService {
 
     public AccountResponse createAccount(CreateAccountRequest request, Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NoSuchElementException("User with this id not found"));
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
 
         Account account = new Account();
 
@@ -39,5 +39,12 @@ public class AccountService {
                 .stream()
                 .map(AccountResponse::new)
                 .toList();
+    }
+
+    public AccountResponse getAccount(Long accountId, Long userId) {
+        Account account = accountRepository.findByIdAndUserId(accountId, userId)
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
+
+        return new AccountResponse(account);
     }
 }

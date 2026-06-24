@@ -18,14 +18,14 @@ public class UserService {
 
     public UserResponse getUser(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NoSuchElementException("User with this id not found"));
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
 
         return new UserResponse(user);
     }
 
     public UserResponse updateUser(UpdateUserRequest request, Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NoSuchElementException("User with this id not found"));
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
 
         if (!Objects.equals(user.getFirstName(), request.getFirstName()) || !Objects.equals(user.getLastName(), request.getLastName())) {
             user.setFirstName(request.getFirstName());
