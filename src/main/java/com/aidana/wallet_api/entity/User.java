@@ -1,5 +1,6 @@
 package com.aidana.wallet_api.entity;
 
+import com.aidana.wallet_api.enums.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -28,6 +29,10 @@ public class User {
 
     @Column(nullable = false)
     private String email;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
 
     @Column(nullable = false)
     private String password;

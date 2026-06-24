@@ -8,6 +8,7 @@ import com.aidana.wallet_api.DTO.response.RefreshResponse;
 import com.aidana.wallet_api.DTO.response.UserResponse;
 import com.aidana.wallet_api.entity.RefreshToken;
 import com.aidana.wallet_api.entity.User;
+import com.aidana.wallet_api.enums.Role;
 import com.aidana.wallet_api.repository.RefreshTokenRepository;
 import com.aidana.wallet_api.repository.UserRepository;
 import com.aidana.wallet_api.util.HashUtils;
@@ -44,6 +45,7 @@ public class AuthService {
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setEmail(request.getEmail());
+        user.setRole(Role.USER);
 
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 

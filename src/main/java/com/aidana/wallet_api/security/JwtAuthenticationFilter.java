@@ -9,13 +9,15 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.crypto.SecretKey;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -45,12 +47,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String email = claims.getSubject();
                 Long userId = claims.get("userId", Long.class);
                 Date expirationDate = claims.getExpiration();
+                String role = claims.get("role", String.class);
+
+                GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
 
                 UserPrincipal principal = new UserPrincipal(
                         userId,
                         email,
                         expirationDate,
-                        Collections.emptyList()
+                        List.of(authority)
                 );
 
                 UsernamePasswordAuthenticationToken authentication =
