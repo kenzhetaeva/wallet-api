@@ -1,0 +1,10 @@
+ALTER TABLE accounts
+    ADD COLUMN blocked_at TIMESTAMP WITH TIME ZONE,
+    ADD COLUMN created_at TIMESTAMP WITH TIME ZONE;
+
+UPDATE accounts
+SET created_at = '2026-07-23 06:44:58.413062 +00:00'
+WHERE created_at IS NULL;
+
+ALTER TABLE accounts
+    ALTER COLUMN created_at SET NOT NULL;

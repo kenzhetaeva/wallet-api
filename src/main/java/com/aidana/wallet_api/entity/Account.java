@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 
 @Entity
 @Table(name = "accounts")
@@ -31,4 +32,10 @@ public class Account {
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal balance = BigDecimal.ZERO;
+
+    @Column(name = "blocked_at")
+    private Instant blockedAt;
+
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt;
 }
