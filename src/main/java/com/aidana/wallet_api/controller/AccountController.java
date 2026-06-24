@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/accounts")
 @RequiredArgsConstructor
@@ -21,5 +23,12 @@ public class AccountController {
             @AuthenticationPrincipal UserPrincipal principal
     ) {
         return accountService.createAccount(request, principal.getUserId());
+    }
+
+    @GetMapping()
+    public List<AccountResponse> getUserAccounts(
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        return accountService.getUserAccounts(principal.getUserId());
     }
 }

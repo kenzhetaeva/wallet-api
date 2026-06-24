@@ -9,6 +9,7 @@ import com.aidana.wallet_api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
@@ -30,5 +31,13 @@ public class AccountService {
         accountRepository.save(account);
 
         return new AccountResponse(account);
+    }
+
+    public List<AccountResponse> getUserAccounts(Long userId) {
+
+        return accountRepository.findByUserId(userId)
+                .stream()
+                .map(AccountResponse::new)
+                .toList();
     }
 }
