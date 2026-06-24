@@ -35,10 +35,7 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public void getCurrentUser(@AuthenticationPrincipal UserPrincipal principal) {
-        System.out.println("principal");
-        System.out.println(principal.getUserId());
-        System.out.println(principal.getEmail());
-        System.out.println(principal.getExpirationDate());
+    public UserResponse getCurrentUser(@AuthenticationPrincipal UserPrincipal principal) {
+        return authService.getUser(principal.getUserId());
     }
 }

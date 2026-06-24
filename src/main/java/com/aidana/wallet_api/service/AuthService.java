@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
@@ -98,5 +99,12 @@ public class AuthService {
         );
 
         return new RefreshResponse(accessToken);
+    }
+
+    public UserResponse getUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User with this id not found"));
+
+        return new UserResponse(user);
     }
 }
