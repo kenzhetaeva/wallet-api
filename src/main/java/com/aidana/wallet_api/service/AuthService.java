@@ -8,6 +8,7 @@ import com.aidana.wallet_api.DTO.response.RefreshResponse;
 import com.aidana.wallet_api.DTO.response.UserResponse;
 import com.aidana.wallet_api.entity.RefreshToken;
 import com.aidana.wallet_api.entity.User;
+import com.aidana.wallet_api.enums.Role;
 import com.aidana.wallet_api.repository.RefreshTokenRepository;
 import com.aidana.wallet_api.repository.UserRepository;
 import com.aidana.wallet_api.util.HashUtils;
@@ -19,7 +20,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
@@ -45,6 +45,7 @@ public class AuthService {
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setEmail(request.getEmail());
+        user.setRole(Role.USER);
 
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
@@ -99,12 +100,5 @@ public class AuthService {
         );
 
         return new RefreshResponse(accessToken);
-    }
-
-    public UserResponse getUser(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NoSuchElementException("User with this id not found"));
-
-        return new UserResponse(user);
     }
 }

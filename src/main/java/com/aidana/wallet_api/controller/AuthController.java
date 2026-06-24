@@ -6,10 +6,8 @@ import com.aidana.wallet_api.DTO.request.RegisterUserRequest;
 import com.aidana.wallet_api.DTO.response.AuthResponse;
 import com.aidana.wallet_api.DTO.response.RefreshResponse;
 import com.aidana.wallet_api.DTO.response.UserResponse;
-import com.aidana.wallet_api.security.UserPrincipal;
 import com.aidana.wallet_api.service.AuthService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -32,10 +30,5 @@ public class AuthController {
     @PostMapping("/refresh")
     public RefreshResponse refreshToken(@RequestBody RefreshTokenRequest request) {
         return authService.refreshToken(request);
-    }
-
-    @GetMapping("/me")
-    public UserResponse getCurrentUser(@AuthenticationPrincipal UserPrincipal principal) {
-        return authService.getUser(principal.getUserId());
     }
 }

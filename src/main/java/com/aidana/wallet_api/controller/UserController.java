@@ -1,25 +1,30 @@
 package com.aidana.wallet_api.controller;
 
+import com.aidana.wallet_api.DTO.request.UpdateUserRequest;
 import com.aidana.wallet_api.DTO.response.UserResponse;
-import com.aidana.wallet_api.entity.User;
-import com.aidana.wallet_api.repository.UserRepository;
+import com.aidana.wallet_api.security.UserPrincipal;
+import com.aidana.wallet_api.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
 
-    @GetMapping("/{id}")
-    public UserResponse getUser(@PathVariable Long id) {
-        User user = userRepository.findById(id).orElseThrow();
+    @GetMapping("/me")
+    public UserResponse getUser(@AuthenticationPrincipal UserPrincipal principal) {
+        return userService.getUser(principal.getUserId());
+    }
 
-        return new UserResponse(user);
+    @PutMapping("/me")
+    public UserResponse updateUser(
+            @RequestBody UpdateUserRequest request,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        return userService.updateUser(request, principal.getUserId());
     }
 }
