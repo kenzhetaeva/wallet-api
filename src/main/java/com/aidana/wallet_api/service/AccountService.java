@@ -9,6 +9,7 @@ import com.aidana.wallet_api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -27,6 +28,7 @@ public class AccountService {
 
         account.setUser(user);
         account.setCurrency(request.getCurrency());
+        account.setCreatedAt(Instant.now());
 
         accountRepository.save(account);
 
@@ -44,6 +46,26 @@ public class AccountService {
     public AccountResponse getAccount(Long accountId, Long userId) {
         Account account = accountRepository.findByIdAndUserId(accountId, userId)
                 .orElseThrow(() -> new NoSuchElementException("Account not found"));
+
+        return new AccountResponse(account);
+    }
+
+    public AccountResponse blockAccount(Long accountId) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
+
+        account.setBlockedAt(Instant.now());
+        accountRepository.save(account);
+
+        return new AccountResponse(account);
+    }
+
+    public AccountResponse unblockAccount(Long accountId) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
+
+        account.setBlockedAt(null);
+        accountRepository.save(account);
 
         return new AccountResponse(account);
     }
