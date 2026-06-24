@@ -1,9 +1,13 @@
 package com.aidana.wallet_api.service;
 
 import com.aidana.wallet_api.DTO.request.CreateAccountRequest;
+import com.aidana.wallet_api.DTO.request.DepositRequest;
+import com.aidana.wallet_api.DTO.request.WithdrawRequest;
 import com.aidana.wallet_api.DTO.response.AccountResponse;
 import com.aidana.wallet_api.entity.Account;
 import com.aidana.wallet_api.entity.User;
+import com.aidana.wallet_api.exception.AccountBlockedException;
+import com.aidana.wallet_api.exception.InsufficientBalanceException;
 import com.aidana.wallet_api.repository.AccountRepository;
 import com.aidana.wallet_api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -65,6 +69,38 @@ public class AccountService {
                 .orElseThrow(() -> new NoSuchElementException("Account not found"));
 
         account.setBlockedAt(null);
+        accountRepository.save(account);
+
+        return new AccountResponse(account);
+    }
+
+    public AccountResponse deposit(Long accountId, Long userId, DepositRequest request) {
+        Account account = accountRepository.findByIdAndUserId(accountId, userId)
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
+
+        if (account.getBlockedAt() != null) {
+            throw new AccountBlockedException("Account is blocked");
+        }
+
+        account.setBalance(account.getBalance().add(request.getAmount()));
+        accountRepository.save(account);
+
+        return new AccountResponse(account);
+    }
+
+    public AccountResponse withdraw(Long accountId, Long userId, WithdrawRequest request) {
+        Account account = accountRepository.findByIdAndUserId(accountId, userId)
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
+
+        if (account.getBlockedAt() != null) {
+            throw new AccountBlockedException("Account is blocked");
+        }
+
+        if (account.getBalance().compareTo(request.getAmount()) < 0) {
+            throw new InsufficientBalanceException("Balance is less than withdraw amount");
+        }
+
+        account.setBalance(account.getBalance().subtract(request.getAmount()));
         accountRepository.save(account);
 
         return new AccountResponse(account);
