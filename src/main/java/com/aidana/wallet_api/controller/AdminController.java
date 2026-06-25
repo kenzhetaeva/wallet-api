@@ -2,14 +2,17 @@ package com.aidana.wallet_api.controller;
 
 import com.aidana.wallet_api.DTO.request.UpdateUserRequest;
 import com.aidana.wallet_api.DTO.response.AccountResponse;
+import com.aidana.wallet_api.DTO.response.TopUsersResponse;
 import com.aidana.wallet_api.DTO.response.TransactionResponse;
 import com.aidana.wallet_api.DTO.response.UserResponse;
+import com.aidana.wallet_api.enums.Currency;
 import com.aidana.wallet_api.service.AccountService;
 import com.aidana.wallet_api.service.TransactionService;
 import com.aidana.wallet_api.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -28,8 +31,8 @@ public class AdminController {
 
     @GetMapping("/users")
     public List<UserResponse> getUsers(
-            @RequestParam Integer page,
-            @RequestParam Integer size
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
     ) {
         return userService.getUsers(page, size);
     }
@@ -54,17 +57,27 @@ public class AdminController {
 
     @GetMapping("/accounts")
     public List<AccountResponse> getAccounts(
-            @RequestParam Integer page,
-            @RequestParam Integer size
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
     ) {
         return accountService.getAccounts(page, size);
     }
 
     @GetMapping("/transactions")
     public List<TransactionResponse> getTransactions(
-            @RequestParam Integer page,
-            @RequestParam Integer size
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
     ) {
         return transactionService.getTransactions(page, size);
+    }
+
+    @GetMapping("/statistics/top-users")
+    public TopUsersResponse getTopUsers(
+            @RequestParam Currency currency,
+            @RequestParam LocalDate from,
+            @RequestParam LocalDate to,
+            @RequestParam(defaultValue = "20") int limit
+        ) {
+        return transactionService.getTopUsers(currency, from, to, limit);
     }
 }

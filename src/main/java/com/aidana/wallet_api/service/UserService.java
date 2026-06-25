@@ -27,7 +27,7 @@ public class UserService {
         return new UserResponse(user);
     }
 
-    public List<UserResponse> getUsers(Integer page, Integer size) {
+    public List<UserResponse> getUsers(int page, int size) {
         Pageable pageable = PageRequest.of(
                 page,
                 size,

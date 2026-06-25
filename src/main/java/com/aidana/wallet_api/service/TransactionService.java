@@ -1,15 +1,19 @@
 package com.aidana.wallet_api.service;
 
+import com.aidana.wallet_api.DTO.projection.TopUserProjection;
 import com.aidana.wallet_api.DTO.request.DepositRequest;
 import com.aidana.wallet_api.DTO.request.TransferRequest;
 import com.aidana.wallet_api.DTO.request.WithdrawRequest;
 import com.aidana.wallet_api.DTO.response.AccountResponse;
+import com.aidana.wallet_api.DTO.response.TopUsersResponse;
 import com.aidana.wallet_api.DTO.response.TransactionResponse;
 import com.aidana.wallet_api.entity.Account;
 import com.aidana.wallet_api.entity.Transaction;
+import com.aidana.wallet_api.enums.Currency;
 import com.aidana.wallet_api.enums.TransactionStatus;
 import com.aidana.wallet_api.enums.TransactionType;
 import com.aidana.wallet_api.exception.AccountBlockedException;
+import com.aidana.wallet_api.exception.CurrencyMismatchException;
 import com.aidana.wallet_api.exception.InsufficientBalanceException;
 import com.aidana.wallet_api.exception.InvalidAccountsException;
 import com.aidana.wallet_api.repository.AccountRepository;
@@ -21,6 +25,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -51,7 +57,7 @@ public class TransactionService {
         return new TransactionResponse(transaction);
     }
 
-    public List<TransactionResponse> getTransactions(Integer page, Integer size) {
+    public List<TransactionResponse> getTransactions(int page, int size) {
         Pageable pageable = PageRequest.of(
                 page,
                 size,
@@ -67,8 +73,8 @@ public class TransactionService {
     public List<TransactionResponse> getAccountTransactions(
             Long accountId,
             Long userId,
-            Integer page,
-            Integer size
+            int page,
+            int size
     ) {
         accountRepository.findByIdAndUserId(accountId, userId)
                 .orElseThrow(() -> new NoSuchElementException("Account not found"));
@@ -157,6 +163,10 @@ public class TransactionService {
             throw new InsufficientBalanceException();
         }
 
+        if (!fromAccount.getCurrency().equals(toAccount.getCurrency())) {
+            throw new CurrencyMismatchException();
+        }
+
         fromAccount.setBalance(fromAccount.getBalance().subtract(request.getAmount()));
         accountRepository.save(fromAccount);
 
@@ -175,5 +185,24 @@ public class TransactionService {
         transactionRepository.save(transaction);
 
         return List.of(new AccountResponse(fromAccount), new AccountResponse(toAccount));
+    }
+
+    public TopUsersResponse getTopUsers(
+            Currency currency,
+            LocalDate from,
+            LocalDate to,
+            int limit
+    ) {
+        Instant fromInstant = from.atStartOfDay(ZoneOffset.UTC).toInstant();
+        Instant toInstant = to.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
+
+        List<TopUserProjection> users = transactionRepository.findTopUsers(
+                currency.toString(),
+                fromInstant,
+                toInstant,
+                PageRequest.of(0, limit)
+        );
+
+        return new TopUsersResponse(currency, fromInstant, toInstant, users);
     }
 }

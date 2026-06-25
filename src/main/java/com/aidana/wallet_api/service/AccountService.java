@@ -46,7 +46,7 @@ public class AccountService {
                 .toList();
     }
 
-    public List<AccountResponse> getAccounts(Integer page, Integer size) {
+    public List<AccountResponse> getAccounts(int page, int size) {
         Pageable pageable = PageRequest.of(
                 page,
                 size,
