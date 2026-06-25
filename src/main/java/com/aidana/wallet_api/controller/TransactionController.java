@@ -4,15 +4,13 @@ import com.aidana.wallet_api.DTO.request.DepositRequest;
 import com.aidana.wallet_api.DTO.request.TransferRequest;
 import com.aidana.wallet_api.DTO.request.WithdrawRequest;
 import com.aidana.wallet_api.DTO.response.AccountResponse;
+import com.aidana.wallet_api.DTO.response.TransactionResponse;
 import com.aidana.wallet_api.security.UserPrincipal;
 import com.aidana.wallet_api.service.TransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -46,5 +44,13 @@ public class TransactionController {
             @AuthenticationPrincipal UserPrincipal principal
     ) {
         return transactionService.transfer(principal.getUserId(), request);
+    }
+
+    @GetMapping("/transactions/{transactionId}")
+    public TransactionResponse getTransaction(
+            @PathVariable Long transactionId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        return transactionService.getTransaction(principal.getUserId(), transactionId);
     }
 }

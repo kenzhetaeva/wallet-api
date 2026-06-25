@@ -4,6 +4,7 @@ import com.aidana.wallet_api.DTO.request.DepositRequest;
 import com.aidana.wallet_api.DTO.request.TransferRequest;
 import com.aidana.wallet_api.DTO.request.WithdrawRequest;
 import com.aidana.wallet_api.DTO.response.AccountResponse;
+import com.aidana.wallet_api.DTO.response.TransactionResponse;
 import com.aidana.wallet_api.entity.Account;
 import com.aidana.wallet_api.entity.Transaction;
 import com.aidana.wallet_api.enums.TransactionStatus;
@@ -27,6 +28,25 @@ public class TransactionService {
 
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
+
+    public TransactionResponse getTransaction(Long userId, Long transactionId) {
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new NoSuchElementException("Transaction not found"));
+
+        boolean isToAccountOwner =
+                transaction.getToAccount() != null &&
+                Objects.equals(transaction.getToAccount().getUser().getId(), userId);
+
+        boolean isFromAccountOwner =
+                transaction.getFromAccount() != null &&
+                Objects.equals(transaction.getFromAccount().getUser().getId(), userId);
+
+        if (!isToAccountOwner && !isFromAccountOwner) {
+            throw new NoSuchElementException("Transaction not found");
+        }
+
+        return new TransactionResponse(transaction);
+    }
 
     public AccountResponse deposit(Long accountId, Long userId, DepositRequest request) {
         Account account = accountRepository.findByIdAndUserId(accountId, userId)
