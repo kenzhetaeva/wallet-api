@@ -23,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -72,21 +73,39 @@ public class TransactionService {
     public List<TransactionResponse> getAccountTransactions(
             Long accountId,
             Long userId,
-            int page,
-            int size
+            Integer page,
+            Integer size
     ) {
         accountRepository.findByIdAndUserId(accountId, userId)
                 .orElseThrow(() -> new NoSuchElementException("Account not found"));
 
-        Pageable pageable = PageRequest.of(
-                page,
-                size,
-                Sort.by("createdAt").descending()
-        );
+        Pageable pageable = (page == null || size == null)
+                ? Pageable.unpaged()
+                : PageRequest.of(page, size);
+
         return transactionRepository.findByFromAccountIdOrToAccountId(accountId, accountId, pageable)
                 .stream()
                 .map(TransactionResponse::new)
                 .toList();
+    }
+
+    public byte[] export(List<TransactionResponse> transactions) {
+
+        StringBuilder csv = new StringBuilder();
+
+        csv.append("id,fromAccountId,toAccountId,amount,status,type,createdAt\n");
+
+        for (TransactionResponse transaction : transactions) {
+            csv.append(transaction.getId()).append(",");
+            csv.append(transaction.getFromAccountId()).append(",");
+            csv.append(transaction.getToAccountId()).append(",");
+            csv.append(transaction.getAmount()).append(",");
+            csv.append(transaction.getStatus()).append(",");
+            csv.append(transaction.getType()).append(",");
+            csv.append(transaction.getCreatedAt()).append("\n");
+        }
+
+        return csv.toString().getBytes(StandardCharsets.UTF_8);
     }
 
     public TransactionResponse deposit(Long accountId, DepositRequest request) {
