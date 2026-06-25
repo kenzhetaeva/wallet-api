@@ -53,4 +53,14 @@ public class TransactionController {
     ) {
         return transactionService.getTransaction(principal.getUserId(), transactionId);
     }
+
+    @GetMapping("/accounts/{accountId}/transactions")
+    public List<TransactionResponse> getTransactions(
+            @PathVariable Long accountId,
+            @RequestParam Integer page,
+            @RequestParam Integer size,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        return transactionService.getTransactions(accountId, principal.getUserId(), page, size);
+    }
 }

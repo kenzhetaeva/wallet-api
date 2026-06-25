@@ -15,6 +15,9 @@ import com.aidana.wallet_api.exception.InvalidAccountsException;
 import com.aidana.wallet_api.repository.AccountRepository;
 import com.aidana.wallet_api.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -46,6 +49,26 @@ public class TransactionService {
         }
 
         return new TransactionResponse(transaction);
+    }
+
+    public List<TransactionResponse> getTransactions(
+            Long accountId,
+            Long userId,
+            Integer page,
+            Integer size
+    ) {
+        accountRepository.findByIdAndUserId(accountId, userId)
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("createdAt").descending()
+        );
+        return transactionRepository.findByFromAccountIdOrToAccountId(accountId, accountId, pageable)
+                .stream()
+                .map(TransactionResponse::new)
+                .toList();
     }
 
     public AccountResponse deposit(Long accountId, Long userId, DepositRequest request) {
