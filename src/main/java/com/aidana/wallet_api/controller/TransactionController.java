@@ -1,6 +1,7 @@
 package com.aidana.wallet_api.controller;
 
 import com.aidana.wallet_api.DTO.request.DepositRequest;
+import com.aidana.wallet_api.DTO.request.TransferRequest;
 import com.aidana.wallet_api.DTO.request.WithdrawRequest;
 import com.aidana.wallet_api.DTO.response.AccountResponse;
 import com.aidana.wallet_api.security.UserPrincipal;
@@ -12,6 +13,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -35,5 +38,13 @@ public class TransactionController {
             @AuthenticationPrincipal UserPrincipal principal
     ) {
         return transactionService.withdraw(accountId, principal.getUserId(), request);
+    }
+
+    @PostMapping("/transfer")
+    public List<AccountResponse> transfer(
+            @Valid @RequestBody TransferRequest request,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        return transactionService.transfer(principal.getUserId(), request);
     }
 }
