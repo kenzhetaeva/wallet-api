@@ -23,10 +23,9 @@ public class TransactionController {
     @PostMapping("/accounts/{accountId}/deposit")
     public AccountResponse deposit(
             @PathVariable Long accountId,
-            @Valid @RequestBody DepositRequest request,
-            @AuthenticationPrincipal UserPrincipal principal
+            @Valid @RequestBody DepositRequest request
     ) {
-        return transactionService.deposit(accountId, principal.getUserId(), request);
+        return transactionService.deposit(accountId, request);
     }
 
     @PostMapping("/accounts/{accountId}/withdraw")

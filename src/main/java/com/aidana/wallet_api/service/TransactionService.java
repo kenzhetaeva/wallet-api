@@ -90,8 +90,8 @@ public class TransactionService {
                 .toList();
     }
 
-    public AccountResponse deposit(Long accountId, Long userId, DepositRequest request) {
-        Account account = accountRepository.findByIdAndUserId(accountId, userId)
+    public AccountResponse deposit(Long accountId, DepositRequest request) {
+        Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new NoSuchElementException("Account not found"));
 
         if (account.getBlockedAt() != null) {
@@ -152,7 +152,7 @@ public class TransactionService {
         Account fromAccount = accountRepository.findByIdAndUserId(request.getFromAccountId(), userId)
                 .orElseThrow(() -> new NoSuchElementException("Account not found"));
 
-        Account toAccount = accountRepository.findByIdAndUserId(request.getToAccountId(), userId)
+        Account toAccount = accountRepository.findById(request.getToAccountId())
                 .orElseThrow(() -> new NoSuchElementException("Account not found"));
 
         if (fromAccount.getBlockedAt() != null || toAccount.getBlockedAt() != null) {

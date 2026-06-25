@@ -2,6 +2,7 @@ package com.aidana.wallet_api.controller;
 
 import com.aidana.wallet_api.DTO.response.ErrorResponse;
 import com.aidana.wallet_api.exception.AccountBlockedException;
+import com.aidana.wallet_api.exception.CurrencyMismatchException;
 import com.aidana.wallet_api.exception.InsufficientBalanceException;
 import com.aidana.wallet_api.exception.InvalidAccountsException;
 import org.springframework.http.HttpStatus;
@@ -46,6 +47,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidAccountsException.class)
     public ResponseEntity<ErrorResponse> handleInvalidAccountsException(
             InvalidAccountsException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(exception.getMessage()));
+    }
+
+    @ExceptionHandler(CurrencyMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleCurrencyMismatchException(
+            CurrencyMismatchException exception
     ) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
