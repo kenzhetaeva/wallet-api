@@ -21,7 +21,7 @@ public class TransactionController {
     private final TransactionService transactionService;
 
     @PostMapping("/accounts/{accountId}/deposit")
-    public AccountResponse deposit(
+    public TransactionResponse deposit(
             @PathVariable Long accountId,
             @Valid @RequestBody DepositRequest request
     ) {
@@ -29,7 +29,7 @@ public class TransactionController {
     }
 
     @PostMapping("/accounts/{accountId}/withdraw")
-    public AccountResponse withdraw(
+    public TransactionResponse withdraw(
             @PathVariable Long accountId,
             @Valid @RequestBody WithdrawRequest request,
             @AuthenticationPrincipal UserPrincipal principal
@@ -38,7 +38,7 @@ public class TransactionController {
     }
 
     @PostMapping("/transfer")
-    public List<AccountResponse> transfer(
+    public TransactionResponse transfer(
             @Valid @RequestBody TransferRequest request,
             @AuthenticationPrincipal UserPrincipal principal
     ) {

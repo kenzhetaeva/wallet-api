@@ -4,7 +4,6 @@ import com.aidana.wallet_api.DTO.projection.TopUserProjection;
 import com.aidana.wallet_api.DTO.request.DepositRequest;
 import com.aidana.wallet_api.DTO.request.TransferRequest;
 import com.aidana.wallet_api.DTO.request.WithdrawRequest;
-import com.aidana.wallet_api.DTO.response.AccountResponse;
 import com.aidana.wallet_api.DTO.response.TopUsersResponse;
 import com.aidana.wallet_api.DTO.response.TransactionResponse;
 import com.aidana.wallet_api.entity.Account;
@@ -90,7 +89,7 @@ public class TransactionService {
                 .toList();
     }
 
-    public AccountResponse deposit(Long accountId, DepositRequest request) {
+    public TransactionResponse deposit(Long accountId, DepositRequest request) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new NoSuchElementException("Account not found"));
 
@@ -112,10 +111,10 @@ public class TransactionService {
 
         transactionRepository.save(transaction);
 
-        return new AccountResponse(account);
+        return new TransactionResponse(transaction);
     }
 
-    public AccountResponse withdraw(Long accountId, Long userId, WithdrawRequest request) {
+    public TransactionResponse withdraw(Long accountId, Long userId, WithdrawRequest request) {
         Account account = accountRepository.findByIdAndUserId(accountId, userId)
                 .orElseThrow(() -> new NoSuchElementException("Account not found"));
 
@@ -141,10 +140,10 @@ public class TransactionService {
 
         transactionRepository.save(transaction);
 
-        return new AccountResponse(account);
+        return new TransactionResponse(transaction);
     }
 
-    public List<AccountResponse> transfer(Long userId, TransferRequest request) {
+    public TransactionResponse transfer(Long userId, TransferRequest request) {
         if (Objects.equals(request.getFromAccountId(), request.getToAccountId())) {
             throw new InvalidAccountsException();
         }
@@ -184,7 +183,7 @@ public class TransactionService {
 
         transactionRepository.save(transaction);
 
-        return List.of(new AccountResponse(fromAccount), new AccountResponse(toAccount));
+        return new TransactionResponse(transaction);
     }
 
     public TopUsersResponse getTopUsers(
