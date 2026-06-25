@@ -4,7 +4,6 @@ import com.aidana.wallet_api.DTO.projection.TopUserProjection;
 import com.aidana.wallet_api.DTO.request.DepositRequest;
 import com.aidana.wallet_api.DTO.request.TransferRequest;
 import com.aidana.wallet_api.DTO.request.WithdrawRequest;
-import com.aidana.wallet_api.DTO.response.AccountResponse;
 import com.aidana.wallet_api.DTO.response.TopUsersResponse;
 import com.aidana.wallet_api.DTO.response.TransactionResponse;
 import com.aidana.wallet_api.entity.Account;
@@ -24,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -73,24 +73,42 @@ public class TransactionService {
     public List<TransactionResponse> getAccountTransactions(
             Long accountId,
             Long userId,
-            int page,
-            int size
+            Integer page,
+            Integer size
     ) {
         accountRepository.findByIdAndUserId(accountId, userId)
                 .orElseThrow(() -> new NoSuchElementException("Account not found"));
 
-        Pageable pageable = PageRequest.of(
-                page,
-                size,
-                Sort.by("createdAt").descending()
-        );
+        Pageable pageable = (page == null || size == null)
+                ? Pageable.unpaged()
+                : PageRequest.of(page, size);
+
         return transactionRepository.findByFromAccountIdOrToAccountId(accountId, accountId, pageable)
                 .stream()
                 .map(TransactionResponse::new)
                 .toList();
     }
 
-    public AccountResponse deposit(Long accountId, DepositRequest request) {
+    public byte[] export(List<TransactionResponse> transactions) {
+
+        StringBuilder csv = new StringBuilder();
+
+        csv.append("id,fromAccountId,toAccountId,amount,status,type,createdAt\n");
+
+        for (TransactionResponse transaction : transactions) {
+            csv.append(transaction.getId()).append(",");
+            csv.append(transaction.getFromAccountId()).append(",");
+            csv.append(transaction.getToAccountId()).append(",");
+            csv.append(transaction.getAmount()).append(",");
+            csv.append(transaction.getStatus()).append(",");
+            csv.append(transaction.getType()).append(",");
+            csv.append(transaction.getCreatedAt()).append("\n");
+        }
+
+        return csv.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    public TransactionResponse deposit(Long accountId, DepositRequest request) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new NoSuchElementException("Account not found"));
 
@@ -112,10 +130,10 @@ public class TransactionService {
 
         transactionRepository.save(transaction);
 
-        return new AccountResponse(account);
+        return new TransactionResponse(transaction);
     }
 
-    public AccountResponse withdraw(Long accountId, Long userId, WithdrawRequest request) {
+    public TransactionResponse withdraw(Long accountId, Long userId, WithdrawRequest request) {
         Account account = accountRepository.findByIdAndUserId(accountId, userId)
                 .orElseThrow(() -> new NoSuchElementException("Account not found"));
 
@@ -141,10 +159,10 @@ public class TransactionService {
 
         transactionRepository.save(transaction);
 
-        return new AccountResponse(account);
+        return new TransactionResponse(transaction);
     }
 
-    public List<AccountResponse> transfer(Long userId, TransferRequest request) {
+    public TransactionResponse transfer(Long userId, TransferRequest request) {
         if (Objects.equals(request.getFromAccountId(), request.getToAccountId())) {
             throw new InvalidAccountsException();
         }
@@ -184,7 +202,7 @@ public class TransactionService {
 
         transactionRepository.save(transaction);
 
-        return List.of(new AccountResponse(fromAccount), new AccountResponse(toAccount));
+        return new TransactionResponse(transaction);
     }
 
     public TopUsersResponse getTopUsers(

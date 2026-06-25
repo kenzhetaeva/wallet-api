@@ -1,10 +1,13 @@
 package com.aidana.wallet_api.service;
 
+import com.aidana.wallet_api.DTO.projection.AccountStatisticsProjection;
 import com.aidana.wallet_api.DTO.request.CreateAccountRequest;
 import com.aidana.wallet_api.DTO.response.AccountResponse;
+import com.aidana.wallet_api.DTO.response.AccountStatisticsResponse;
 import com.aidana.wallet_api.entity.Account;
 import com.aidana.wallet_api.entity.User;
 import com.aidana.wallet_api.repository.AccountRepository;
+import com.aidana.wallet_api.repository.TransactionRepository;
 import com.aidana.wallet_api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -22,6 +25,7 @@ public class AccountService {
 
     private final UserRepository userRepository;
     private final AccountRepository accountRepository;
+    private final TransactionRepository transactionRepository;
 
     public AccountResponse createAccount(CreateAccountRequest request, Long userId) {
         User user = userRepository.findById(userId)
@@ -64,6 +68,20 @@ public class AccountService {
                 .orElseThrow(() -> new NoSuchElementException("Account not found"));
 
         return new AccountResponse(account);
+    }
+
+    public AccountStatisticsResponse getAccountStatistics(Long accountId, Long userId) {
+        accountRepository.findByIdAndUserId(accountId, userId)
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
+
+        AccountStatisticsProjection projection = transactionRepository.getAccountStatistics(accountId);
+
+        return new AccountStatisticsResponse(
+                projection.getTotalDeposits(),
+                projection.getTotalWithdrawals(),
+                projection.getTotalTransfers(),
+                projection.getTransactionCount()
+        );
     }
 
     public AccountResponse blockAccount(Long accountId) {

@@ -2,6 +2,7 @@ package com.aidana.wallet_api.controller;
 
 import com.aidana.wallet_api.DTO.request.CreateAccountRequest;
 import com.aidana.wallet_api.DTO.response.AccountResponse;
+import com.aidana.wallet_api.DTO.response.AccountStatisticsResponse;
 import com.aidana.wallet_api.security.UserPrincipal;
 import com.aidana.wallet_api.service.AccountService;
 import lombok.RequiredArgsConstructor;
@@ -38,5 +39,13 @@ public class AccountController {
             @AuthenticationPrincipal UserPrincipal principal
     ) {
         return accountService.getAccount(accountId, principal.getUserId());
+    }
+
+    @GetMapping("/{accountId}/statistics")
+    public AccountStatisticsResponse getAccountStatistics(
+            @PathVariable Long accountId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        return accountService.getAccountStatistics(accountId, principal.getUserId());
     }
 }

@@ -1,5 +1,6 @@
 package com.aidana.wallet_api.repository;
 
+import com.aidana.wallet_api.DTO.projection.AccountStatisticsProjection;
 import com.aidana.wallet_api.DTO.projection.TopUserProjection;
 import com.aidana.wallet_api.entity.Transaction;
 import org.springframework.data.domain.Pageable;
@@ -42,4 +43,34 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @Param("to") Instant to,
             Pageable pageable
     );
+
+    @Query(value = """
+    SELECT
+        COALESCE(SUM(
+            CASE
+                WHEN type = 'DEPOSIT' THEN amount
+                ELSE 0
+            END
+        ), 0) AS totalDeposits,
+
+        COALESCE(SUM(
+            CASE
+                WHEN type = 'WITHDRAW' THEN amount
+                ELSE 0
+            END
+        ), 0) AS totalWithdrawals,
+
+        COALESCE(SUM(
+            CASE
+                WHEN type = 'TRANSFER' THEN amount
+                ELSE 0
+            END
+        ), 0) AS totalTransfers,
+
+        COUNT(*) AS transactionCount
+    FROM transactions
+    WHERE status = 'COMPLETED'
+      AND (from_account_id = :accountId OR to_account_id = :accountId)
+    """, nativeQuery = true)
+    AccountStatisticsProjection getAccountStatistics(Long accountId);
 }
