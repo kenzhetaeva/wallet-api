@@ -4,7 +4,7 @@ import com.aidana.wallet_api.DTO.request.DepositRequest;
 import com.aidana.wallet_api.DTO.request.WithdrawRequest;
 import com.aidana.wallet_api.DTO.response.AccountResponse;
 import com.aidana.wallet_api.security.UserPrincipal;
-import com.aidana.wallet_api.service.AccountService;
+import com.aidana.wallet_api.service.TransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class TransactionController {
 
-    private final AccountService accountService;
+    private final TransactionService transactionService;
 
     @PostMapping("/accounts/{accountId}/deposit")
     public AccountResponse deposit(
@@ -25,7 +25,7 @@ public class TransactionController {
             @Valid @RequestBody DepositRequest request,
             @AuthenticationPrincipal UserPrincipal principal
     ) {
-        return accountService.deposit(accountId, principal.getUserId(), request);
+        return transactionService.deposit(accountId, principal.getUserId(), request);
     }
 
     @PostMapping("/accounts/{accountId}/withdraw")
@@ -34,6 +34,6 @@ public class TransactionController {
             @Valid @RequestBody WithdrawRequest request,
             @AuthenticationPrincipal UserPrincipal principal
     ) {
-        return accountService.withdraw(accountId, principal.getUserId(), request);
+        return transactionService.withdraw(accountId, principal.getUserId(), request);
     }
 }
