@@ -51,7 +51,20 @@ public class TransactionService {
         return new TransactionResponse(transaction);
     }
 
-    public List<TransactionResponse> getTransactions(
+    public List<TransactionResponse> getTransactions(Integer page, Integer size) {
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("id").ascending()
+        );
+
+        return transactionRepository.findAll(pageable)
+                .stream()
+                .map(TransactionResponse::new)
+                .toList();
+    }
+
+    public List<TransactionResponse> getAccountTransactions(
             Long accountId,
             Long userId,
             Integer page,

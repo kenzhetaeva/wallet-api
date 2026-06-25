@@ -61,6 +61,6 @@ public class TransactionController {
             @RequestParam Integer size,
             @AuthenticationPrincipal UserPrincipal principal
     ) {
-        return transactionService.getTransactions(accountId, principal.getUserId(), page, size);
+        return transactionService.getAccountTransactions(accountId, principal.getUserId(), page, size);
     }
 }

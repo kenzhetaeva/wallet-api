@@ -10,6 +10,7 @@ import java.time.Instant;
 @Getter
 public class AccountResponse {
     private final Long id;
+    private final Long userId;
     private final Currency currency;
     private final BigDecimal balance;
     private final boolean isBlocked;
@@ -17,6 +18,7 @@ public class AccountResponse {
 
     public AccountResponse(Account account) {
         this.id = account.getId();
+        this.userId = account.getUser().getId();
         this.currency = account.getCurrency();
         this.balance = account.getBalance();
         this.isBlocked = account.getBlockedAt() != null;

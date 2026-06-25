@@ -7,6 +7,9 @@ import com.aidana.wallet_api.entity.User;
 import com.aidana.wallet_api.repository.AccountRepository;
 import com.aidana.wallet_api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -38,6 +41,19 @@ public class AccountService {
     public List<AccountResponse> getUserAccounts(Long userId) {
 
         return accountRepository.findByUserId(userId)
+                .stream()
+                .map(AccountResponse::new)
+                .toList();
+    }
+
+    public List<AccountResponse> getAccounts(Integer page, Integer size) {
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("id").ascending()
+        );
+
+        return accountRepository.findAll(pageable)
                 .stream()
                 .map(AccountResponse::new)
                 .toList();
