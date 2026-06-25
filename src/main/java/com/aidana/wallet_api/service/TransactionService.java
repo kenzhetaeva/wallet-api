@@ -33,7 +33,7 @@ public class TransactionService {
                 .orElseThrow(() -> new NoSuchElementException("Account not found"));
 
         if (account.getBlockedAt() != null) {
-            throw new AccountBlockedException("Account is blocked");
+            throw new AccountBlockedException();
         }
 
         account.setBalance(account.getBalance().add(request.getAmount()));
@@ -58,11 +58,11 @@ public class TransactionService {
                 .orElseThrow(() -> new NoSuchElementException("Account not found"));
 
         if (account.getBlockedAt() != null) {
-            throw new AccountBlockedException("Account is blocked");
+            throw new AccountBlockedException();
         }
 
         if (account.getBalance().compareTo(request.getAmount()) < 0) {
-            throw new InsufficientBalanceException("Balance is less than withdraw amount");
+            throw new InsufficientBalanceException();
         }
 
         account.setBalance(account.getBalance().subtract(request.getAmount()));
@@ -84,7 +84,7 @@ public class TransactionService {
 
     public List<AccountResponse> transfer(Long userId, TransferRequest request) {
         if (Objects.equals(request.getFromAccountId(), request.getToAccountId())) {
-            throw new InvalidAccountsException("Provided invalid account ids");
+            throw new InvalidAccountsException();
         }
 
         Account fromAccount = accountRepository.findByIdAndUserId(request.getFromAccountId(), userId)
@@ -94,11 +94,11 @@ public class TransactionService {
                 .orElseThrow(() -> new NoSuchElementException("Account not found"));
 
         if (fromAccount.getBlockedAt() != null || toAccount.getBlockedAt() != null) {
-            throw new AccountBlockedException("Account is blocked");
+            throw new AccountBlockedException();
         }
 
         if (fromAccount.getBalance().compareTo(request.getAmount()) < 0) {
-            throw new InsufficientBalanceException("Balance is less than withdraw amount");
+            throw new InsufficientBalanceException();
         }
 
         fromAccount.setBalance(fromAccount.getBalance().subtract(request.getAmount()));
