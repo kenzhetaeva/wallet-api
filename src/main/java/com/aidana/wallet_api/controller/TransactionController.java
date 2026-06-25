@@ -57,10 +57,10 @@ public class TransactionController {
     @GetMapping("/accounts/{accountId}/transactions")
     public List<TransactionResponse> getTransactions(
             @PathVariable Long accountId,
-            @RequestParam Integer page,
-            @RequestParam Integer size,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal UserPrincipal principal
     ) {
-        return transactionService.getTransactions(accountId, principal.getUserId(), page, size);
+        return transactionService.getAccountTransactions(accountId, principal.getUserId(), page, size);
     }
 }
