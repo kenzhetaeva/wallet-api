@@ -135,9 +135,7 @@ public class TransactionServiceTest {
     void shouldDepositMoney() {
 
         Long accountId = 1L;
-
         DepositRequest request = depositRequest();
-
         Account account = account(BigDecimal.valueOf(500), null, null);
 
         when(accountRepository.findById(accountId))
@@ -160,9 +158,7 @@ public class TransactionServiceTest {
     void shouldCreateDepositTransaction() {
 
         Long accountId = 1L;
-
         DepositRequest request = depositRequest();
-
         Account account = account(BigDecimal.valueOf(500), null, null);
 
         when(accountRepository.findById(accountId))
@@ -187,7 +183,6 @@ public class TransactionServiceTest {
     void shouldThrowWhenAccountNotFoundOnDepositMoney() {
 
         Long accountId = 1L;
-
         DepositRequest request = depositRequest();
 
         when(accountRepository.findById(accountId))
@@ -206,9 +201,7 @@ public class TransactionServiceTest {
     void shouldThrowWhenAccountBlockedOnDepositMoney() {
 
         Long accountId = 1L;
-
         DepositRequest request = depositRequest();
-
         Account account = account(null, null, Instant.now());
 
         when(accountRepository.findById(accountId))
@@ -230,7 +223,6 @@ public class TransactionServiceTest {
         Long userId = 1L;
 
         WithdrawRequest request = withdrawRequest();
-
         Account account = account(BigDecimal.valueOf(500), null, null);
 
         when(accountRepository.findByIdAndUserId(accountId, userId))
@@ -256,7 +248,6 @@ public class TransactionServiceTest {
         Long userId = 1L;
 
         WithdrawRequest request = withdrawRequest();
-
         Account account = account(BigDecimal.valueOf(500), null, null);
 
         when(accountRepository.findByIdAndUserId(accountId, userId))
@@ -304,7 +295,6 @@ public class TransactionServiceTest {
         Long userId = 1L;
 
         WithdrawRequest request = withdrawRequest();
-
         Account account = account(null, null, Instant.now());
 
         when(accountRepository.findByIdAndUserId(accountId, userId))
@@ -326,7 +316,6 @@ public class TransactionServiceTest {
         Long userId = 1L;
 
         WithdrawRequest request = withdrawRequest();
-
         Account account = account(BigDecimal.valueOf(50), null, null);
 
         when(accountRepository.findByIdAndUserId(accountId, userId))
@@ -348,9 +337,7 @@ public class TransactionServiceTest {
         Long userId = 1L;
 
         TransferRequest request = transferRequest(2L);
-
         Account fromAccount = account(BigDecimal.valueOf(500), Currency.EUR, null);
-
         Account toAccount = account(BigDecimal.valueOf(100), Currency.EUR, null);
 
         when(accountRepository.findByIdAndUserId(request.getFromAccountId(), userId))
@@ -385,9 +372,7 @@ public class TransactionServiceTest {
         Long userId = 1L;
 
         TransferRequest request = transferRequest(2L);
-
         Account fromAccount = account(BigDecimal.valueOf(500), Currency.EUR, null);
-
         Account toAccount = account(BigDecimal.valueOf(100), Currency.EUR, null);
 
         when(accountRepository.findByIdAndUserId(request.getFromAccountId(), userId))
@@ -437,7 +422,6 @@ public class TransactionServiceTest {
         Long userId = 1L;
 
         TransferRequest request = transferRequest(2L);
-
         Account fromAccount = new Account();
 
         when(accountRepository.findByIdAndUserId(request.getFromAccountId(), userId))
@@ -461,9 +445,7 @@ public class TransactionServiceTest {
         Long userId = 1L;
 
         TransferRequest request = transferRequest(2L);
-
         Account fromAccount = account(null, null, null);
-
         Account toAccount = account(null, null, Instant.now());
 
         when(accountRepository.findByIdAndUserId(request.getFromAccountId(), userId))
@@ -487,9 +469,7 @@ public class TransactionServiceTest {
         Long userId = 1L;
 
         TransferRequest request = transferRequest(2L);
-
         Account fromAccount = account(BigDecimal.valueOf(50), null, null);
-
         Account toAccount = account(BigDecimal.valueOf(100), null, null);
 
         when(accountRepository.findByIdAndUserId(request.getFromAccountId(), userId))
@@ -513,9 +493,7 @@ public class TransactionServiceTest {
         Long userId = 1L;
 
         TransferRequest request = transferRequest(2L);
-
         Account fromAccount = account(BigDecimal.valueOf(500), Currency.EUR, null);
-
         Account toAccount = account(BigDecimal.valueOf(100), Currency.USD, null);
 
         when(accountRepository.findByIdAndUserId(request.getFromAccountId(), userId))
