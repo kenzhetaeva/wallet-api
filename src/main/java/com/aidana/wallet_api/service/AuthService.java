@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
@@ -83,7 +84,7 @@ public class AuthService {
         String tokenHash = hashUtils.sha256(request.getRefreshToken());
 
         RefreshToken refreshToken = refreshTokenRepository.findByTokenHash(tokenHash)
-                .orElseThrow(() -> new BadCredentialsException("Refresh token not found"));
+                .orElseThrow(() -> new NoSuchElementException("Refresh token not found"));
 
         Instant now = Instant.now();
 

@@ -1,8 +1,10 @@
 package com.aidana.wallet_api.service;
 
 import com.aidana.wallet_api.DTO.request.LoginUserRequest;
+import com.aidana.wallet_api.DTO.request.RefreshTokenRequest;
 import com.aidana.wallet_api.DTO.request.RegisterUserRequest;
 import com.aidana.wallet_api.DTO.response.AuthResponse;
+import com.aidana.wallet_api.DTO.response.RefreshResponse;
 import com.aidana.wallet_api.DTO.response.UserResponse;
 import com.aidana.wallet_api.entity.RefreshToken;
 import com.aidana.wallet_api.entity.User;
@@ -19,6 +21,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -194,6 +199,128 @@ public class AuthServiceTest {
         verifyNoInteractions(jwtService);
     }
 
+    @Test
+    void shouldRefreshToken() {
+
+        String hashedRefreshToken = "hashedRefreshToken";
+        String accessToken = "accessToken";
+
+        RefreshTokenRequest request = refreshTokenRequest();
+
+        User user = new User();
+        Instant now = Instant.now();
+
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setUser(user);
+        refreshToken.setExpiresAt(now.plus(1, ChronoUnit.DAYS));
+        refreshToken.setRevokedAt(null);
+
+        when(hashUtils.sha256(request.getRefreshToken()))
+                .thenReturn(hashedRefreshToken);
+        when(refreshTokenRepository.findByTokenHash(hashedRefreshToken))
+                .thenReturn(Optional.of(refreshToken));
+        when(jwtService.generateAccessToken(user))
+                .thenReturn(accessToken);
+
+        RefreshResponse response = authService.refreshToken(request);
+
+        assertEquals(accessToken, response.getAccessToken());
+
+        verify(hashUtils).sha256(request.getRefreshToken());
+        verify(refreshTokenRepository).findByTokenHash(hashedRefreshToken);
+        verify(jwtService).generateAccessToken(user);
+    }
+
+    @Test
+    void shouldThrowWhenTokenNotFound() {
+
+        String hashedRefreshToken = "hashedRefreshToken";
+
+        RefreshTokenRequest request = refreshTokenRequest();
+
+        when(hashUtils.sha256(request.getRefreshToken()))
+                .thenReturn(hashedRefreshToken);
+        when(refreshTokenRepository.findByTokenHash(hashedRefreshToken))
+                .thenReturn(Optional.empty());
+
+        NoSuchElementException exception = assertThrows(
+                NoSuchElementException.class,
+                () -> authService.refreshToken(request)
+        );
+
+        assertEquals(
+                "Refresh token not found",
+                exception.getMessage()
+        );
+
+        verify(hashUtils).sha256(request.getRefreshToken());
+        verify(refreshTokenRepository).findByTokenHash(hashedRefreshToken);
+        verifyNoInteractions(jwtService);
+    }
+
+    @Test
+    void shouldThrowWhenRefreshTokenRevoked() {
+
+        String hashedRefreshToken = "hashedRefreshToken";
+
+        RefreshTokenRequest request = refreshTokenRequest();
+        Instant now = Instant.now();
+
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setRevokedAt(now);
+
+        when(hashUtils.sha256(request.getRefreshToken()))
+                .thenReturn(hashedRefreshToken);
+        when(refreshTokenRepository.findByTokenHash(hashedRefreshToken))
+                .thenReturn(Optional.of(refreshToken));
+
+        BadCredentialsException exception = assertThrows(
+                BadCredentialsException.class,
+                () -> authService.refreshToken(request)
+        );
+
+        assertEquals(
+                "Refresh token revoked",
+                exception.getMessage()
+        );
+
+        verify(hashUtils).sha256(request.getRefreshToken());
+        verify(refreshTokenRepository).findByTokenHash(hashedRefreshToken);
+        verifyNoInteractions(jwtService);
+    }
+
+    @Test
+    void shouldThrowWhenRefreshTokenExpired() {
+
+        String hashedRefreshToken = "hashedRefreshToken";
+
+        RefreshTokenRequest request = refreshTokenRequest();
+        Instant now = Instant.now();
+
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setExpiresAt(now.minus(1, ChronoUnit.MINUTES));
+        refreshToken.setRevokedAt(null);
+
+        when(hashUtils.sha256(request.getRefreshToken()))
+                .thenReturn(hashedRefreshToken);
+        when(refreshTokenRepository.findByTokenHash(hashedRefreshToken))
+                .thenReturn(Optional.of(refreshToken));
+
+        BadCredentialsException exception = assertThrows(
+                BadCredentialsException.class,
+                () -> authService.refreshToken(request)
+        );
+
+        assertEquals(
+                "Refresh token expired",
+                exception.getMessage()
+        );
+
+        verify(hashUtils).sha256(request.getRefreshToken());
+        verify(refreshTokenRepository).findByTokenHash(hashedRefreshToken);
+        verifyNoInteractions(jwtService);
+    }
+
     private RegisterUserRequest registerUserRequest() {
         RegisterUserRequest request = new RegisterUserRequest();
         request.setFirstName("John");
@@ -208,6 +335,13 @@ public class AuthServiceTest {
         LoginUserRequest request = new LoginUserRequest();
         request.setEmail("johndoe@example.com");
         request.setPassword("123");
+
+        return request;
+    }
+
+    private RefreshTokenRequest refreshTokenRequest() {
+        RefreshTokenRequest request = new RefreshTokenRequest();
+        request.setRefreshToken("refresh-token");
 
         return request;
     }
