@@ -9,6 +9,7 @@ import com.aidana.wallet_api.entity.User;
 import com.aidana.wallet_api.enums.TransactionStatus;
 import com.aidana.wallet_api.enums.TransactionType;
 import com.aidana.wallet_api.exception.AccountBlockedException;
+import com.aidana.wallet_api.exception.InsufficientBalanceException;
 import com.aidana.wallet_api.repository.AccountRepository;
 import com.aidana.wallet_api.repository.TransactionRepository;
 import org.junit.jupiter.api.Test;
@@ -145,7 +146,7 @@ public class TransactionServiceTest {
         when(accountRepository.findById(accountId))
                 .thenReturn(Optional.of(account));
 
-        TransactionResponse response = transactionService.deposit(accountId, request);
+        transactionService.deposit(accountId, request);
 
         assertEquals(BigDecimal.valueOf(600), account.getBalance());
 
@@ -322,6 +323,32 @@ public class TransactionServiceTest {
                 () -> transactionService.withdraw(accountId, userId, request)
         );
 
+        verify(transactionRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowWhenWithdrawMoneyAmountLessThanAccountBalance() {
+
+        Long accountId = 1L;
+        Long userId = 1L;
+
+        WithdrawRequest request = new WithdrawRequest();
+        request.setAmount(BigDecimal.valueOf(1000));
+
+        Account account = new Account();
+        account.setId(accountId);
+        account.setBalance(BigDecimal.valueOf(500));
+        account.setBlockedAt(null);
+
+        when(accountRepository.findByIdAndUserId(accountId, userId))
+                .thenReturn(Optional.of(account));
+
+        assertThrows(
+                InsufficientBalanceException.class,
+                () -> transactionService.withdraw(accountId, userId, request)
+        );
+
+        verify(accountRepository).findByIdAndUserId(accountId, userId);
         verify(transactionRepository, never()).save(any());
     }
 }
