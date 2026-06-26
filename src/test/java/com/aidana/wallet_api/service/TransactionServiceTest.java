@@ -19,6 +19,7 @@ import com.aidana.wallet_api.repository.TransactionRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -57,11 +58,9 @@ public class TransactionServiceTest {
         user2.setId(2L);
 
         Account fromAccount = new Account();
-        fromAccount.setId(1L);
         fromAccount.setUser(user1);
 
         Account toAccount = new Account();
-        toAccount.setId(2L);
         toAccount.setUser(user2);
 
         Transaction transaction = new Transaction();
@@ -94,11 +93,9 @@ public class TransactionServiceTest {
         user3.setId(3L);
 
         Account toAccount = new Account();
-        toAccount.setId(2L);
         toAccount.setUser(user2);
 
         Account fromAccount = new Account();
-        fromAccount.setId(3L);
         fromAccount.setUser(user3);
 
         Transaction transaction = new Transaction();
@@ -139,37 +136,34 @@ public class TransactionServiceTest {
 
         Long accountId = 1L;
 
-        DepositRequest request = new DepositRequest();
-        request.setAmount(BigDecimal.valueOf(100));
+        DepositRequest request = depositRequest();
 
-        Account account = new Account();
-        account.setId(accountId);
-        account.setBalance(BigDecimal.valueOf(500));
-        account.setBlockedAt(null);
+        Account account = account(BigDecimal.valueOf(500), null, null);
 
         when(accountRepository.findById(accountId))
                 .thenReturn(Optional.of(account));
 
-        transactionService.deposit(accountId, request);
+        TransactionResponse response = transactionService.deposit(accountId, request);
 
         assertEquals(BigDecimal.valueOf(600), account.getBalance());
 
+        assertEquals(TransactionType.DEPOSIT, response.getType());
+        assertEquals(TransactionStatus.COMPLETED, response.getStatus());
+        assertEquals(request.getAmount(), response.getAmount());
+
         verify(accountRepository).findById(accountId);
+        verify(accountRepository).save(account);
         verify(transactionRepository).save(any(Transaction.class));
     }
 
     @Test
-    void shouldSaveCorrectTransactionOnDepositMoney() {
+    void shouldCreateDepositTransaction() {
 
         Long accountId = 1L;
 
-        DepositRequest request = new DepositRequest();
-        request.setAmount(BigDecimal.valueOf(100));
+        DepositRequest request = depositRequest();
 
-        Account account = new Account();
-        account.setId(accountId);
-        account.setBalance(BigDecimal.valueOf(500));
-        account.setBlockedAt(null);
+        Account account = account(BigDecimal.valueOf(500), null, null);
 
         when(accountRepository.findById(accountId))
                 .thenReturn(Optional.of(account));
@@ -194,8 +188,7 @@ public class TransactionServiceTest {
 
         Long accountId = 1L;
 
-        DepositRequest request = new DepositRequest();
-        request.setAmount(BigDecimal.valueOf(100));
+        DepositRequest request = depositRequest();
 
         when(accountRepository.findById(accountId))
                 .thenReturn(Optional.empty());
@@ -205,6 +198,7 @@ public class TransactionServiceTest {
                 () -> transactionService.deposit(accountId, request)
         );
 
+        verify(accountRepository, never()).save(any());
         verify(transactionRepository, never()).save(any());
     }
 
@@ -213,11 +207,9 @@ public class TransactionServiceTest {
 
         Long accountId = 1L;
 
-        DepositRequest request = new DepositRequest();
-        request.setAmount(BigDecimal.valueOf(100));
+        DepositRequest request = depositRequest();
 
-        Account account = new Account();
-        account.setBlockedAt(Instant.now());
+        Account account = account(null, null, Instant.now());
 
         when(accountRepository.findById(accountId))
                 .thenReturn(Optional.of(account));
@@ -227,6 +219,7 @@ public class TransactionServiceTest {
                 () -> transactionService.deposit(accountId, request)
         );
 
+        verify(accountRepository, never()).save(any());
         verify(transactionRepository, never()).save(any());
     }
 
@@ -236,38 +229,35 @@ public class TransactionServiceTest {
         Long accountId = 1L;
         Long userId = 1L;
 
-        WithdrawRequest request = new WithdrawRequest();
-        request.setAmount(BigDecimal.valueOf(100));
+        WithdrawRequest request = withdrawRequest();
 
-        Account account = new Account();
-        account.setId(accountId);
-        account.setBalance(BigDecimal.valueOf(500));
-        account.setBlockedAt(null);
+        Account account = account(BigDecimal.valueOf(500), null, null);
 
         when(accountRepository.findByIdAndUserId(accountId, userId))
                 .thenReturn(Optional.of(account));
 
-        transactionService.withdraw(accountId, userId, request);
+        TransactionResponse response = transactionService.withdraw(accountId, userId, request);
 
         assertEquals(BigDecimal.valueOf(400), account.getBalance());
 
+        assertEquals(TransactionType.WITHDRAW, response.getType());
+        assertEquals(TransactionStatus.COMPLETED, response.getStatus());
+        assertEquals(request.getAmount(), response.getAmount());
+
         verify(accountRepository).findByIdAndUserId(accountId, userId);
+        verify(accountRepository).save(account);
         verify(transactionRepository).save(any(Transaction.class));
     }
 
     @Test
-    void shouldSaveCorrectTransactionOnWithdrawMoney() {
+    void shouldCreateWithdrawTransaction() {
 
         Long accountId = 1L;
         Long userId = 1L;
 
-        WithdrawRequest request = new WithdrawRequest();
-        request.setAmount(BigDecimal.valueOf(100));
+        WithdrawRequest request = withdrawRequest();
 
-        Account account = new Account();
-        account.setId(accountId);
-        account.setBalance(BigDecimal.valueOf(500));
-        account.setBlockedAt(null);
+        Account account = account(BigDecimal.valueOf(500), null, null);
 
         when(accountRepository.findByIdAndUserId(accountId, userId))
                 .thenReturn(Optional.of(account));
@@ -293,8 +283,7 @@ public class TransactionServiceTest {
         Long accountId = 1L;
         Long userId = 1L;
 
-        WithdrawRequest request = new WithdrawRequest();
-        request.setAmount(BigDecimal.valueOf(100));
+        WithdrawRequest request = withdrawRequest();
 
         when(accountRepository.findByIdAndUserId(accountId, userId))
                 .thenReturn(Optional.empty());
@@ -304,6 +293,7 @@ public class TransactionServiceTest {
                 () -> transactionService.withdraw(accountId, userId, request)
         );
 
+        verify(accountRepository, never()).save(any());
         verify(transactionRepository, never()).save(any());
     }
 
@@ -313,11 +303,9 @@ public class TransactionServiceTest {
         Long accountId = 1L;
         Long userId = 1L;
 
-        WithdrawRequest request = new WithdrawRequest();
-        request.setAmount(BigDecimal.valueOf(100));
+        WithdrawRequest request = withdrawRequest();
 
-        Account account = new Account();
-        account.setBlockedAt(Instant.now());
+        Account account = account(null, null, Instant.now());
 
         when(accountRepository.findByIdAndUserId(accountId, userId))
                 .thenReturn(Optional.of(account));
@@ -327,6 +315,7 @@ public class TransactionServiceTest {
                 () -> transactionService.withdraw(accountId, userId, request)
         );
 
+        verify(accountRepository, never()).save(any());
         verify(transactionRepository, never()).save(any());
     }
 
@@ -336,13 +325,9 @@ public class TransactionServiceTest {
         Long accountId = 1L;
         Long userId = 1L;
 
-        WithdrawRequest request = new WithdrawRequest();
-        request.setAmount(BigDecimal.valueOf(1000));
+        WithdrawRequest request = withdrawRequest();
 
-        Account account = new Account();
-        account.setId(accountId);
-        account.setBalance(BigDecimal.valueOf(500));
-        account.setBlockedAt(null);
+        Account account = account(BigDecimal.valueOf(50), null, null);
 
         when(accountRepository.findByIdAndUserId(accountId, userId))
                 .thenReturn(Optional.of(account));
@@ -353,6 +338,7 @@ public class TransactionServiceTest {
         );
 
         verify(accountRepository).findByIdAndUserId(accountId, userId);
+        verify(accountRepository, never()).save(any());
         verify(transactionRepository, never()).save(any());
     }
 
@@ -361,22 +347,11 @@ public class TransactionServiceTest {
 
         Long userId = 1L;
 
-        TransferRequest request = new TransferRequest();
-        request.setAmount(BigDecimal.valueOf(100));
-        request.setToAccountId(1L);
-        request.setFromAccountId(2L);
+        TransferRequest request = transferRequest(2L);
 
-        Account fromAccount = new Account();
-        fromAccount.setId(request.getFromAccountId());
-        fromAccount.setBalance(BigDecimal.valueOf(500));
-        fromAccount.setCurrency(Currency.EUR);
-        fromAccount.setBlockedAt(null);
+        Account fromAccount = account(BigDecimal.valueOf(500), Currency.EUR, null);
 
-        Account toAccount = new Account();
-        toAccount.setId(request.getToAccountId());
-        toAccount.setBalance(BigDecimal.valueOf(100));
-        toAccount.setCurrency(Currency.EUR);
-        toAccount.setBlockedAt(null);
+        Account toAccount = account(BigDecimal.valueOf(100), Currency.EUR, null);
 
         when(accountRepository.findByIdAndUserId(request.getFromAccountId(), userId))
                 .thenReturn(Optional.of(fromAccount));
@@ -384,37 +359,36 @@ public class TransactionServiceTest {
         when(accountRepository.findById(request.getToAccountId()))
                 .thenReturn(Optional.of(toAccount));
 
-        transactionService.transfer(userId, request);
+        TransactionResponse response = transactionService.transfer(userId, request);
 
         assertEquals(BigDecimal.valueOf(400), fromAccount.getBalance());
         assertEquals(BigDecimal.valueOf(200), toAccount.getBalance());
 
+        assertEquals(TransactionType.TRANSFER, response.getType());
+        assertEquals(TransactionStatus.COMPLETED, response.getStatus());
+        assertEquals(request.getAmount(), response.getAmount());
+
         verify(accountRepository).findByIdAndUserId(request.getFromAccountId(), userId);
         verify(accountRepository).findById(request.getToAccountId());
+
+        InOrder inOrder = inOrder(accountRepository);
+
+        inOrder.verify(accountRepository).save(fromAccount);
+        inOrder.verify(accountRepository).save(toAccount);
+
         verify(transactionRepository).save(any(Transaction.class));
     }
 
     @Test
-    void shouldSaveCorrectTransactionOnTransferMoney() {
+    void shouldCreateTransferTransaction() {
 
         Long userId = 1L;
 
-        TransferRequest request = new TransferRequest();
-        request.setAmount(BigDecimal.valueOf(100));
-        request.setToAccountId(1L);
-        request.setFromAccountId(2L);
+        TransferRequest request = transferRequest(2L);
 
-        Account fromAccount = new Account();
-        fromAccount.setId(request.getFromAccountId());
-        fromAccount.setBalance(BigDecimal.valueOf(500));
-        fromAccount.setCurrency(Currency.EUR);
-        fromAccount.setBlockedAt(null);
+        Account fromAccount = account(BigDecimal.valueOf(500), Currency.EUR, null);
 
-        Account toAccount = new Account();
-        toAccount.setId(request.getToAccountId());
-        toAccount.setBalance(BigDecimal.valueOf(100));
-        toAccount.setCurrency(Currency.EUR);
-        toAccount.setBlockedAt(null);
+        Account toAccount = account(BigDecimal.valueOf(100), Currency.EUR, null);
 
         when(accountRepository.findByIdAndUserId(request.getFromAccountId(), userId))
                 .thenReturn(Optional.of(fromAccount));
@@ -438,14 +412,11 @@ public class TransactionServiceTest {
     }
 
     @Test
-    void shouldThrowWhenSourceAccountNotFoundOnTransferMoney() {
+    void shouldThrowWhenSourceAccountNotFound() {
 
         Long userId = 1L;
 
-        TransferRequest request = new TransferRequest();
-        request.setAmount(BigDecimal.valueOf(100));
-        request.setToAccountId(1L);
-        request.setFromAccountId(2L);
+        TransferRequest request = transferRequest(2L);
 
         when(accountRepository.findByIdAndUserId(request.getFromAccountId(), userId))
                 .thenReturn(Optional.empty());
@@ -456,19 +427,16 @@ public class TransactionServiceTest {
         );
 
         verify(accountRepository, never()).findById(request.getToAccountId());
+        verify(accountRepository, never()).save(any());
         verify(transactionRepository, never()).save(any());
     }
 
-
     @Test
-    void shouldThrowWhenDestinationAccountNotFoundOnTransferMoney() {
+    void shouldThrowWhenDestinationAccountNotFound() {
 
         Long userId = 1L;
 
-        TransferRequest request = new TransferRequest();
-        request.setAmount(BigDecimal.valueOf(100));
-        request.setToAccountId(1L);
-        request.setFromAccountId(2L);
+        TransferRequest request = transferRequest(2L);
 
         Account fromAccount = new Account();
 
@@ -483,6 +451,7 @@ public class TransactionServiceTest {
                 () -> transactionService.transfer(userId, request)
         );
 
+        verify(accountRepository, never()).save(any());
         verify(transactionRepository, never()).save(any());
     }
 
@@ -491,16 +460,11 @@ public class TransactionServiceTest {
 
         Long userId = 1L;
 
-        TransferRequest request = new TransferRequest();
-        request.setAmount(BigDecimal.valueOf(100));
-        request.setToAccountId(1L);
-        request.setFromAccountId(2L);
+        TransferRequest request = transferRequest(2L);
 
-        Account fromAccount = new Account();
-        fromAccount.setBlockedAt(null);
+        Account fromAccount = account(null, null, null);
 
-        Account toAccount = new Account();
-        toAccount.setBlockedAt(Instant.now());
+        Account toAccount = account(null, null, Instant.now());
 
         when(accountRepository.findByIdAndUserId(request.getFromAccountId(), userId))
                 .thenReturn(Optional.of(fromAccount));
@@ -513,6 +477,7 @@ public class TransactionServiceTest {
                 () -> transactionService.transfer(userId, request)
         );
 
+        verify(accountRepository, never()).save(any());
         verify(transactionRepository, never()).save(any());
     }
 
@@ -521,18 +486,11 @@ public class TransactionServiceTest {
 
         Long userId = 1L;
 
-        TransferRequest request = new TransferRequest();
-        request.setAmount(BigDecimal.valueOf(1000));
-        request.setToAccountId(1L);
-        request.setFromAccountId(2L);
+        TransferRequest request = transferRequest(2L);
 
-        Account fromAccount = new Account();
-        fromAccount.setBalance(BigDecimal.valueOf(500));
-        fromAccount.setBlockedAt(null);
+        Account fromAccount = account(BigDecimal.valueOf(50), null, null);
 
-        Account toAccount = new Account();
-        toAccount.setBalance(BigDecimal.valueOf(100));
-        toAccount.setBlockedAt(null);
+        Account toAccount = account(BigDecimal.valueOf(100), null, null);
 
         when(accountRepository.findByIdAndUserId(request.getFromAccountId(), userId))
                 .thenReturn(Optional.of(fromAccount));
@@ -545,28 +503,20 @@ public class TransactionServiceTest {
                 () -> transactionService.transfer(userId, request)
         );
 
+        verify(accountRepository, never()).save(any());
         verify(transactionRepository, never()).save(any());
     }
 
     @Test
-    void shouldThrowWhenAccountCurrenciesDifferOnTransferMoney() {
+    void shouldThrowWhenAccountCurrenciesDiffer() {
 
         Long userId = 1L;
 
-        TransferRequest request = new TransferRequest();
-        request.setAmount(BigDecimal.valueOf(100));
-        request.setToAccountId(1L);
-        request.setFromAccountId(2L);
+        TransferRequest request = transferRequest(2L);
 
-        Account fromAccount = new Account();
-        fromAccount.setBalance(BigDecimal.valueOf(500));
-        fromAccount.setCurrency(Currency.EUR);
-        fromAccount.setBlockedAt(null);
+        Account fromAccount = account(BigDecimal.valueOf(500), Currency.EUR, null);
 
-        Account toAccount = new Account();
-        toAccount.setBalance(BigDecimal.valueOf(100));
-        toAccount.setCurrency(Currency.USD);
-        toAccount.setBlockedAt(null);
+        Account toAccount = account(BigDecimal.valueOf(100), Currency.USD, null);
 
         when(accountRepository.findByIdAndUserId(request.getFromAccountId(), userId))
                 .thenReturn(Optional.of(fromAccount));
@@ -579,19 +529,16 @@ public class TransactionServiceTest {
                 () -> transactionService.transfer(userId, request)
         );
 
+        verify(accountRepository, never()).save(any());
         verify(transactionRepository, never()).save(any());
     }
 
-
     @Test
-    void shouldThrowWhenSameAccountsProvidedOnTransferMoney() {
+    void shouldThrowWhenSameAccountsProvided() {
 
         Long userId = 1L;
 
-        TransferRequest request = new TransferRequest();
-        request.setAmount(BigDecimal.valueOf(100));
-        request.setToAccountId(1L);
-        request.setFromAccountId(1L);
+        TransferRequest request = transferRequest(1L);
 
         assertThrows(
                 InvalidAccountsException.class,
@@ -600,6 +547,43 @@ public class TransactionServiceTest {
 
         verify(accountRepository, never()).findByIdAndUserId(request.getFromAccountId(), userId);
         verify(accountRepository, never()).findById(request.getToAccountId());
+        verify(accountRepository, never()).save(any());
         verify(transactionRepository, never()).save(any());
+    }
+
+    private DepositRequest depositRequest() {
+        DepositRequest request = new DepositRequest();
+        request.setAmount(BigDecimal.valueOf(100));
+
+        return request;
+    }
+
+    private WithdrawRequest withdrawRequest() {
+        WithdrawRequest request = new WithdrawRequest();
+        request.setAmount(BigDecimal.valueOf(100));
+
+        return request;
+    }
+
+    private TransferRequest transferRequest(Long fromAccountId) {
+        TransferRequest request = new TransferRequest();
+        request.setAmount(BigDecimal.valueOf(100));
+        request.setToAccountId(1L);
+        request.setFromAccountId(fromAccountId);
+
+        return request;
+    }
+
+    private Account account(
+            BigDecimal balance,
+            Currency currency,
+            Instant blockedAt
+    ) {
+        Account account = new Account();
+        account.setBalance(balance);
+        account.setCurrency(currency);
+        account.setBlockedAt(blockedAt);
+
+        return account;
     }
 }
