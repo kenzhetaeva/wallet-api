@@ -1,15 +1,19 @@
 package com.aidana.wallet_api.service;
 
 import com.aidana.wallet_api.DTO.request.DepositRequest;
+import com.aidana.wallet_api.DTO.request.TransferRequest;
 import com.aidana.wallet_api.DTO.request.WithdrawRequest;
 import com.aidana.wallet_api.DTO.response.TransactionResponse;
 import com.aidana.wallet_api.entity.Account;
 import com.aidana.wallet_api.entity.Transaction;
 import com.aidana.wallet_api.entity.User;
+import com.aidana.wallet_api.enums.Currency;
 import com.aidana.wallet_api.enums.TransactionStatus;
 import com.aidana.wallet_api.enums.TransactionType;
 import com.aidana.wallet_api.exception.AccountBlockedException;
+import com.aidana.wallet_api.exception.CurrencyMismatchException;
 import com.aidana.wallet_api.exception.InsufficientBalanceException;
+import com.aidana.wallet_api.exception.InvalidAccountsException;
 import com.aidana.wallet_api.repository.AccountRepository;
 import com.aidana.wallet_api.repository.TransactionRepository;
 import org.junit.jupiter.api.Test;
@@ -327,7 +331,7 @@ public class TransactionServiceTest {
     }
 
     @Test
-    void shouldThrowWhenWithdrawMoneyAmountLessThanAccountBalance() {
+    void shouldThrowWhenWithdrawalAmountExceedsBalance() {
 
         Long accountId = 1L;
         Long userId = 1L;
@@ -349,6 +353,253 @@ public class TransactionServiceTest {
         );
 
         verify(accountRepository).findByIdAndUserId(accountId, userId);
+        verify(transactionRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldTransferMoney() {
+
+        Long userId = 1L;
+
+        TransferRequest request = new TransferRequest();
+        request.setAmount(BigDecimal.valueOf(100));
+        request.setToAccountId(1L);
+        request.setFromAccountId(2L);
+
+        Account fromAccount = new Account();
+        fromAccount.setId(request.getFromAccountId());
+        fromAccount.setBalance(BigDecimal.valueOf(500));
+        fromAccount.setCurrency(Currency.EUR);
+        fromAccount.setBlockedAt(null);
+
+        Account toAccount = new Account();
+        toAccount.setId(request.getToAccountId());
+        toAccount.setBalance(BigDecimal.valueOf(100));
+        toAccount.setCurrency(Currency.EUR);
+        toAccount.setBlockedAt(null);
+
+        when(accountRepository.findByIdAndUserId(request.getFromAccountId(), userId))
+                .thenReturn(Optional.of(fromAccount));
+
+        when(accountRepository.findById(request.getToAccountId()))
+                .thenReturn(Optional.of(toAccount));
+
+        transactionService.transfer(userId, request);
+
+        assertEquals(BigDecimal.valueOf(400), fromAccount.getBalance());
+        assertEquals(BigDecimal.valueOf(200), toAccount.getBalance());
+
+        verify(accountRepository).findByIdAndUserId(request.getFromAccountId(), userId);
+        verify(accountRepository).findById(request.getToAccountId());
+        verify(transactionRepository).save(any(Transaction.class));
+    }
+
+    @Test
+    void shouldSaveCorrectTransactionOnTransferMoney() {
+
+        Long userId = 1L;
+
+        TransferRequest request = new TransferRequest();
+        request.setAmount(BigDecimal.valueOf(100));
+        request.setToAccountId(1L);
+        request.setFromAccountId(2L);
+
+        Account fromAccount = new Account();
+        fromAccount.setId(request.getFromAccountId());
+        fromAccount.setBalance(BigDecimal.valueOf(500));
+        fromAccount.setCurrency(Currency.EUR);
+        fromAccount.setBlockedAt(null);
+
+        Account toAccount = new Account();
+        toAccount.setId(request.getToAccountId());
+        toAccount.setBalance(BigDecimal.valueOf(100));
+        toAccount.setCurrency(Currency.EUR);
+        toAccount.setBlockedAt(null);
+
+        when(accountRepository.findByIdAndUserId(request.getFromAccountId(), userId))
+                .thenReturn(Optional.of(fromAccount));
+
+        when(accountRepository.findById(request.getToAccountId()))
+                .thenReturn(Optional.of(toAccount));
+
+        transactionService.transfer(userId, request);
+
+        ArgumentCaptor<Transaction> captor = ArgumentCaptor.forClass(Transaction.class);
+        verify(transactionRepository).save(captor.capture());
+
+        Transaction transaction = captor.getValue();
+
+        assertEquals(fromAccount, transaction.getFromAccount());
+        assertEquals(toAccount, transaction.getToAccount());
+        assertEquals(BigDecimal.valueOf(100), transaction.getAmount());
+        assertEquals(TransactionStatus.COMPLETED, transaction.getStatus());
+        assertEquals(TransactionType.TRANSFER, transaction.getType());
+        assertNotNull(transaction.getCreatedAt());
+    }
+
+    @Test
+    void shouldThrowWhenSourceAccountNotFoundOnTransferMoney() {
+
+        Long userId = 1L;
+
+        TransferRequest request = new TransferRequest();
+        request.setAmount(BigDecimal.valueOf(100));
+        request.setToAccountId(1L);
+        request.setFromAccountId(2L);
+
+        when(accountRepository.findByIdAndUserId(request.getFromAccountId(), userId))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                NoSuchElementException.class,
+                () -> transactionService.transfer(userId, request)
+        );
+
+        verify(accountRepository, never()).findById(request.getToAccountId());
+        verify(transactionRepository, never()).save(any());
+    }
+
+
+    @Test
+    void shouldThrowWhenDestinationAccountNotFoundOnTransferMoney() {
+
+        Long userId = 1L;
+
+        TransferRequest request = new TransferRequest();
+        request.setAmount(BigDecimal.valueOf(100));
+        request.setToAccountId(1L);
+        request.setFromAccountId(2L);
+
+        Account fromAccount = new Account();
+
+        when(accountRepository.findByIdAndUserId(request.getFromAccountId(), userId))
+                .thenReturn(Optional.of(fromAccount));
+
+        when(accountRepository.findById(request.getToAccountId()))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                NoSuchElementException.class,
+                () -> transactionService.transfer(userId, request)
+        );
+
+        verify(transactionRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowWhenAccountBlockedOnTransferMoney() {
+
+        Long userId = 1L;
+
+        TransferRequest request = new TransferRequest();
+        request.setAmount(BigDecimal.valueOf(100));
+        request.setToAccountId(1L);
+        request.setFromAccountId(2L);
+
+        Account fromAccount = new Account();
+        fromAccount.setBlockedAt(null);
+
+        Account toAccount = new Account();
+        toAccount.setBlockedAt(Instant.now());
+
+        when(accountRepository.findByIdAndUserId(request.getFromAccountId(), userId))
+                .thenReturn(Optional.of(fromAccount));
+
+        when(accountRepository.findById(request.getToAccountId()))
+                .thenReturn(Optional.of(toAccount));
+
+        assertThrows(
+                AccountBlockedException.class,
+                () -> transactionService.transfer(userId, request)
+        );
+
+        verify(transactionRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowWhenWithdrawalAmountExceedsBalanceOnTransferMoney() {
+
+        Long userId = 1L;
+
+        TransferRequest request = new TransferRequest();
+        request.setAmount(BigDecimal.valueOf(1000));
+        request.setToAccountId(1L);
+        request.setFromAccountId(2L);
+
+        Account fromAccount = new Account();
+        fromAccount.setBalance(BigDecimal.valueOf(500));
+        fromAccount.setBlockedAt(null);
+
+        Account toAccount = new Account();
+        toAccount.setBalance(BigDecimal.valueOf(100));
+        toAccount.setBlockedAt(null);
+
+        when(accountRepository.findByIdAndUserId(request.getFromAccountId(), userId))
+                .thenReturn(Optional.of(fromAccount));
+
+        when(accountRepository.findById(request.getToAccountId()))
+                .thenReturn(Optional.of(toAccount));
+
+        assertThrows(
+                InsufficientBalanceException.class,
+                () -> transactionService.transfer(userId, request)
+        );
+
+        verify(transactionRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowWhenAccountCurrenciesDifferOnTransferMoney() {
+
+        Long userId = 1L;
+
+        TransferRequest request = new TransferRequest();
+        request.setAmount(BigDecimal.valueOf(100));
+        request.setToAccountId(1L);
+        request.setFromAccountId(2L);
+
+        Account fromAccount = new Account();
+        fromAccount.setBalance(BigDecimal.valueOf(500));
+        fromAccount.setCurrency(Currency.EUR);
+        fromAccount.setBlockedAt(null);
+
+        Account toAccount = new Account();
+        toAccount.setBalance(BigDecimal.valueOf(100));
+        toAccount.setCurrency(Currency.USD);
+        toAccount.setBlockedAt(null);
+
+        when(accountRepository.findByIdAndUserId(request.getFromAccountId(), userId))
+                .thenReturn(Optional.of(fromAccount));
+
+        when(accountRepository.findById(request.getToAccountId()))
+                .thenReturn(Optional.of(toAccount));
+
+        assertThrows(
+                CurrencyMismatchException.class,
+                () -> transactionService.transfer(userId, request)
+        );
+
+        verify(transactionRepository, never()).save(any());
+    }
+
+
+    @Test
+    void shouldThrowWhenSameAccountsProvidedOnTransferMoney() {
+
+        Long userId = 1L;
+
+        TransferRequest request = new TransferRequest();
+        request.setAmount(BigDecimal.valueOf(100));
+        request.setToAccountId(1L);
+        request.setFromAccountId(1L);
+
+        assertThrows(
+                InvalidAccountsException.class,
+                () -> transactionService.transfer(userId, request)
+        );
+
+        verify(accountRepository, never()).findByIdAndUserId(request.getFromAccountId(), userId);
+        verify(accountRepository, never()).findById(request.getToAccountId());
         verify(transactionRepository, never()).save(any());
     }
 }
