@@ -86,4 +86,100 @@ public class AccountServiceTest {
         verify(userRepository).findById(userId);
         verifyNoInteractions(accountRepository);
     }
+
+    @Test
+    void shouldBlockAccount() {
+
+        Long accountId = 1L;
+        Long userId = 1L;
+
+        User user = new User();
+        user.setId(userId);
+
+        Account accountById = new Account();
+        accountById.setUser(user);
+
+        when(accountRepository.findById(accountId)).thenReturn(Optional.of(accountById));
+
+        AccountResponse response = accountService.blockAccount(accountId);
+
+        ArgumentCaptor<Account> captor = ArgumentCaptor.forClass(Account.class);
+        verify(accountRepository).save(captor.capture());
+
+        Account account = captor.getValue();
+        assertNotNull(account.getBlockedAt());
+
+        assertTrue(response.isBlocked());
+        assertEquals(userId, response.getUserId());
+
+        verify(accountRepository).findById(accountId);
+    }
+
+    @Test
+    void shouldThrowAccountNotFoundOnBlock() {
+
+        Long accountId = 1L;
+
+        when(accountRepository.findById(accountId)).thenReturn(Optional.empty());
+
+        NoSuchElementException exception = assertThrows(
+                NoSuchElementException.class,
+                () -> accountService.blockAccount(accountId)
+        );
+        assertEquals(
+                "Account not found",
+                exception.getMessage()
+        );
+
+        verify(accountRepository).findById(accountId);
+        verify(accountRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldUnblockAccount() {
+
+        Long accountId = 1L;
+        Long userId = 1L;
+
+        User user = new User();
+        user.setId(userId);
+
+        Account accountById = new Account();
+        accountById.setUser(user);
+
+        when(accountRepository.findById(accountId)).thenReturn(Optional.of(accountById));
+
+        AccountResponse response = accountService.unblockAccount(accountId);
+
+        ArgumentCaptor<Account> captor = ArgumentCaptor.forClass(Account.class);
+        verify(accountRepository).save(captor.capture());
+
+        Account account = captor.getValue();
+        assertNull(account.getBlockedAt());
+
+        assertFalse(response.isBlocked());
+        assertEquals(userId, response.getUserId());
+
+        verify(accountRepository).findById(accountId);
+    }
+
+    @Test
+    void shouldThrowAccountNotFoundOnUnblock() {
+
+        Long accountId = 1L;
+
+        when(accountRepository.findById(accountId)).thenReturn(Optional.empty());
+
+        NoSuchElementException exception = assertThrows(
+                NoSuchElementException.class,
+                () -> accountService.unblockAccount(accountId)
+        );
+        assertEquals(
+                "Account not found",
+                exception.getMessage()
+        );
+
+        verify(accountRepository).findById(accountId);
+        verify(accountRepository, never()).save(any());
+    }
 }
