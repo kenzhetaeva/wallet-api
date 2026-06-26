@@ -44,12 +44,10 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NoSuchElementException("User not found"));
 
-        if (!Objects.equals(user.getFirstName(), request.getFirstName()) || !Objects.equals(user.getLastName(), request.getLastName())) {
-            user.setFirstName(request.getFirstName());
-            user.setLastName(request.getLastName());
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
 
-            userRepository.save(user);
-        }
+        userRepository.save(user);
 
         return new UserResponse(user);
     }

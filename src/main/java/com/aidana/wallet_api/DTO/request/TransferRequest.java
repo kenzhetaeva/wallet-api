@@ -3,10 +3,12 @@ package com.aidana.wallet_api.DTO.request;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 
 @Getter
+@Setter
 public class TransferRequest {
 
     private Long fromAccountId;
