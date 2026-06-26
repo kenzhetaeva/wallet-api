@@ -108,6 +108,7 @@ public class AccountServiceTest {
 
         Account account = captor.getValue();
         assertNotNull(account.getBlockedAt());
+        assertEquals(user, account.getUser());
 
         assertTrue(response.isBlocked());
         assertEquals(userId, response.getUserId());
@@ -116,7 +117,7 @@ public class AccountServiceTest {
     }
 
     @Test
-    void shouldThrowAccountNotFoundOnBlock() {
+    void shouldThrowWhenAccountNotFoundOnBlock() {
 
         Long accountId = 1L;
 
@@ -156,6 +157,7 @@ public class AccountServiceTest {
 
         Account account = captor.getValue();
         assertNull(account.getBlockedAt());
+        assertEquals(user, account.getUser());
 
         assertFalse(response.isBlocked());
         assertEquals(userId, response.getUserId());
@@ -164,7 +166,7 @@ public class AccountServiceTest {
     }
 
     @Test
-    void shouldThrowAccountNotFoundOnUnblock() {
+    void shouldThrowWhenAccountNotFoundOnUnblock() {
 
         Long accountId = 1L;
 
