@@ -1,7 +1,10 @@
 package com.aidana.wallet_api.service;
 
+import com.aidana.wallet_api.DTO.request.LoginUserRequest;
 import com.aidana.wallet_api.DTO.request.RegisterUserRequest;
+import com.aidana.wallet_api.DTO.response.AuthResponse;
 import com.aidana.wallet_api.DTO.response.UserResponse;
+import com.aidana.wallet_api.entity.RefreshToken;
 import com.aidana.wallet_api.entity.User;
 import com.aidana.wallet_api.enums.Role;
 import com.aidana.wallet_api.repository.RefreshTokenRepository;
@@ -13,10 +16,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -95,10 +100,112 @@ public class AuthServiceTest {
         verify(userRepository, never()).save(any());
     }
 
+    @Test
+    void shouldLoginUser() {
+
+        LoginUserRequest request = loginUserRequest();
+
+        User user = new User();
+        user.setPassword("123");
+
+        when(userRepository.findByEmail(request.getEmail()))
+                .thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(request.getPassword(), user.getPassword()))
+                .thenReturn(true);
+        when(hashUtils.sha256(anyString()))
+                .thenReturn("hashedRefreshToken");
+        when(jwtService.generateAccessToken(user))
+                .thenReturn("accessToken");
+
+        AuthResponse response = authService.login(request);
+
+        ArgumentCaptor<RefreshToken> captor = ArgumentCaptor.forClass(RefreshToken.class);
+        verify(refreshTokenRepository).save(captor.capture());
+
+        RefreshToken refreshToken = captor.getValue();
+        assertEquals(user, refreshToken.getUser());
+        assertEquals("hashedRefreshToken", refreshToken.getTokenHash());
+        assertNotNull(refreshToken.getCreatedAt());
+        assertNotNull(refreshToken.getExpiresAt());
+        assertNull(refreshToken.getRevokedAt());
+        assertTrue(refreshToken.getExpiresAt().isAfter(refreshToken.getCreatedAt()));
+
+        assertEquals("accessToken", response.getAccessToken());
+        assertNotNull(response.getRefreshToken());
+
+        verify(userRepository).findByEmail(request.getEmail());
+        verify(passwordEncoder).matches(request.getPassword(), user.getPassword());
+        verify(hashUtils).sha256(anyString());
+        verify(jwtService).generateAccessToken(user);
+    }
+
+    @Test
+    void shouldThrowWhenUserNotFound() {
+
+        LoginUserRequest request = loginUserRequest();
+
+        when(userRepository.findByEmail(request.getEmail()))
+                .thenReturn(Optional.empty());
+
+        BadCredentialsException exception = assertThrows(
+                BadCredentialsException.class,
+                () -> authService.login(request)
+        );
+
+        assertEquals(
+                "User with this email doesn't exist",
+                exception.getMessage()
+        );
+
+        verify(userRepository).findByEmail(request.getEmail());
+        verifyNoInteractions(passwordEncoder);
+        verifyNoInteractions(hashUtils);
+        verifyNoInteractions(refreshTokenRepository);
+        verifyNoInteractions(jwtService);
+    }
+
+    @Test
+    void shouldThrowWhenPasswordIncorrect() {
+
+        LoginUserRequest request = loginUserRequest();
+
+        User user = new User();
+        user.setPassword("456");
+
+        when(userRepository.findByEmail(request.getEmail()))
+                .thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(request.getPassword(), user.getPassword()))
+                .thenReturn(false);
+
+        BadCredentialsException exception = assertThrows(
+                BadCredentialsException.class,
+                () -> authService.login(request)
+        );
+
+        assertEquals(
+                "Invalid credentials",
+                exception.getMessage()
+        );
+
+        verify(userRepository).findByEmail(request.getEmail());
+        verify(passwordEncoder).matches(request.getPassword(), user.getPassword());
+        verifyNoInteractions(hashUtils);
+        verifyNoInteractions(refreshTokenRepository);
+        verifyNoInteractions(jwtService);
+    }
+
     private RegisterUserRequest registerUserRequest() {
         RegisterUserRequest request = new RegisterUserRequest();
         request.setFirstName("John");
         request.setLastName("Doe");
+        request.setEmail("johndoe@example.com");
+        request.setPassword("123");
+
+        return request;
+    }
+
+    private LoginUserRequest loginUserRequest() {
+        LoginUserRequest request = new LoginUserRequest();
         request.setEmail("johndoe@example.com");
         request.setPassword("123");
 
