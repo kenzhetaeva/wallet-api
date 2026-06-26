@@ -4,6 +4,7 @@ import com.aidana.wallet_api.entity.Account;
 import com.aidana.wallet_api.entity.Transaction;
 import com.aidana.wallet_api.enums.TransactionStatus;
 import com.aidana.wallet_api.enums.TransactionType;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 import java.math.BigDecimal;
@@ -11,6 +12,7 @@ import java.time.Instant;
 import java.util.Optional;
 
 @Getter
+@EqualsAndHashCode
 public class TransactionResponse {
 
     private final Long id;
