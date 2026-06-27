@@ -1,10 +1,12 @@
 package com.aidana.wallet_api.repository;
 
+import com.aidana.wallet_api.DTO.projection.TopUserProjection;
 import com.aidana.wallet_api.config.PostgresContainerTest;
 import com.aidana.wallet_api.entity.Account;
 import com.aidana.wallet_api.entity.Transaction;
 import com.aidana.wallet_api.entity.User;
 import com.aidana.wallet_api.enums.Currency;
+import com.aidana.wallet_api.enums.TransactionStatus;
 import com.aidana.wallet_api.util.TestDataFactory;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +15,10 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
@@ -27,7 +33,7 @@ public class TransactionRepositoryTest extends PostgresContainerTest {
     private TestEntityManager entityManager;
 
     @Test
-    void shouldReturnOnlyFirstPage() {
+    void shouldReturnOnlyFirstPageOfTransactionsByAccountId() {
 
         User user = TestDataFactory.createUser();
         entityManager.persist(user);
@@ -55,5 +61,95 @@ public class TransactionRepositoryTest extends PostgresContainerTest {
         assertThat(page.getTotalElements()).isEqualTo(5);
         assertThat(page.getTotalPages()).isEqualTo(3);
         assertThat(page.hasNext()).isTrue();
+    }
+
+    @Test
+    void shouldReturnTopUsersByCompletedTransactions() {
+
+        // Users
+        User userA = TestDataFactory.createUser();
+        entityManager.persist(userA);
+
+        User userB = TestDataFactory.createUser();
+        entityManager.persist(userB);
+
+        User userC = TestDataFactory.createUser();
+        entityManager.persist(userC);
+
+        User userD = TestDataFactory.createUser();
+        entityManager.persist(userD);
+
+        // Accounts
+        Account accountA = TestDataFactory.createAccount(userA, Currency.USD);
+        entityManager.persist(accountA);
+
+        Account accountB = TestDataFactory.createAccount(userB, Currency.USD);
+        entityManager.persist(accountB);
+
+        Account accountC = TestDataFactory.createAccount(userC, Currency.EUR);
+        entityManager.persist(accountC);
+
+        Account accountD = TestDataFactory.createAccount(userC, Currency.USD);
+        entityManager.persist(accountD);
+
+        // Transactions
+        // Transaction of User & Account A
+        Transaction transactionA1 = TestDataFactory.createTransaction(
+                accountA,
+                BigDecimal.valueOf(100)
+        );
+        entityManager.persist(transactionA1);
+        Transaction transactionA2 = TestDataFactory.createTransaction(
+                accountA,
+                BigDecimal.valueOf(200)
+        );
+        entityManager.persist(transactionA2);
+        Transaction transactionA3 = TestDataFactory.createTransaction(
+                accountA,
+                BigDecimal.valueOf(200),
+                TransactionStatus.FAILED,
+                Instant.now()
+        );
+        entityManager.persist(transactionA3);
+
+        // Transaction of User & Account B
+        Transaction transactionB1 = TestDataFactory.createTransaction(
+                accountB,
+                BigDecimal.valueOf(150)
+        );
+        entityManager.persist(transactionB1);
+
+        // Transaction of User & Account C
+        Transaction transactionC1 = TestDataFactory.createTransaction(
+                accountC,
+                BigDecimal.valueOf(1000)
+        );
+        entityManager.persist(transactionC1);
+
+        // Transaction of User & Account D
+        Transaction transactionD1 = TestDataFactory.createTransaction(
+                accountD,
+                BigDecimal.valueOf(1000),
+                TransactionStatus.COMPLETED,
+                Instant.now().minus(2, ChronoUnit.DAYS)
+        );
+        entityManager.persist(transactionD1);
+
+        entityManager.flush();
+        entityManager.clear();
+
+        Page<TopUserProjection> page = transactionRepository.findTopUsers(
+                Currency.USD.toString(),
+                Instant.now().minus(1, ChronoUnit.DAYS),
+                Instant.now().plus(1, ChronoUnit.DAYS),
+                PageRequest.of(0, 2)
+        );
+
+        assertThat(page.getContent()).hasSize(2);
+
+        assertThat(page.getContent().get(0).getEmail()).isEqualTo(userA.getEmail());
+        assertThat(page.getContent().get(0).getTotalTransferred()).isEqualTo("300.00");
+        assertThat(page.getContent().get(1).getEmail()).isEqualTo(userB.getEmail());
+        assertThat(page.getContent().get(1).getTotalTransferred()).isEqualTo("150.00");
     }
 }

@@ -12,6 +12,7 @@ import com.aidana.wallet_api.enums.TransactionType;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 
 public final class TestDataFactory {
 
@@ -19,7 +20,7 @@ public final class TestDataFactory {
         User user = new User();
         user.setFirstName("FirstName");
         user.setLastName("LastName");
-        user.setEmail("email@mail.com");
+        user.setEmail(UUID.randomUUID() + "@mail.com");
         user.setRole(Role.USER);
         user.setPassword("password");
 
@@ -47,13 +48,26 @@ public final class TestDataFactory {
     }
 
     public static Transaction createTransaction(Account account) {
+        return createTransaction(account, BigDecimal.valueOf(100));
+    }
+
+    public static Transaction createTransaction(Account account, BigDecimal amount) {
+        return createTransaction(account, amount, TransactionStatus.COMPLETED, Instant.now());
+    }
+
+    public static Transaction createTransaction(
+            Account account,
+            BigDecimal amount,
+            TransactionStatus status,
+            Instant createdAt
+    ) {
         Transaction transaction = new Transaction();
         transaction.setFromAccount(account);
         transaction.setToAccount(null);
-        transaction.setAmount(BigDecimal.valueOf(100));
-        transaction.setStatus(TransactionStatus.COMPLETED);
+        transaction.setAmount(amount);
+        transaction.setStatus(status);
         transaction.setType(TransactionType.WITHDRAW);
-        transaction.setCreatedAt(Instant.now());
+        transaction.setCreatedAt(createdAt);
 
         return transaction;
     }

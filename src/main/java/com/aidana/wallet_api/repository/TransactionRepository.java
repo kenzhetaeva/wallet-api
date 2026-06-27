@@ -38,7 +38,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
         GROUP BY u.id
         ORDER BY totalTransferred DESC
         """, nativeQuery = true)
-    List<TopUserProjection> findTopUsers(
+    Page<TopUserProjection> findTopUsers(
             @Param("currency") String currency,
             @Param("from") Instant from,
             @Param("to") Instant to,
