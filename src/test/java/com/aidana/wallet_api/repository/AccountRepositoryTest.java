@@ -4,14 +4,13 @@ import com.aidana.wallet_api.config.PostgresContainerTest;
 import com.aidana.wallet_api.entity.Account;
 import com.aidana.wallet_api.entity.User;
 import com.aidana.wallet_api.enums.Currency;
-import com.aidana.wallet_api.enums.Role;
+import com.aidana.wallet_api.util.TestDataFactory;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,10 +29,10 @@ public class AccountRepositoryTest extends PostgresContainerTest {
     @Test
     void shouldReturnAccountByIdAndUserId() {
 
-        User user = createUser();
+        User user = TestDataFactory.createUser();
         entityManager.persist(user);
 
-        Account account = createAccount(user, Currency.USD);
+        Account account = TestDataFactory.createAccount(user, Currency.USD);
         entityManager.persist(account);
 
         entityManager.flush();
@@ -51,13 +50,13 @@ public class AccountRepositoryTest extends PostgresContainerTest {
     @Test
     void shouldReturnAccountsByUserId() {
 
-        User user = createUser();
+        User user = TestDataFactory.createUser();
         entityManager.persist(user);
 
-        Account accountFirst = createAccount(user, Currency.USD);
+        Account accountFirst = TestDataFactory.createAccount(user, Currency.USD);
         entityManager.persist(accountFirst);
 
-        Account accountSecond = createAccount(user, Currency.EUR);
+        Account accountSecond = TestDataFactory.createAccount(user, Currency.EUR);
         entityManager.persist(accountSecond);
 
         entityManager.flush();
@@ -66,25 +65,5 @@ public class AccountRepositoryTest extends PostgresContainerTest {
         List<Account> result = accountRepository.findByUserId(user.getId());
 
         assertThat(result).hasSize(2);
-    }
-
-    private User createUser() {
-        User user = new User();
-        user.setFirstName("FirstName");
-        user.setLastName("LastName");
-        user.setEmail("email@mail.com");
-        user.setRole(Role.USER);
-        user.setPassword("password");
-
-        return user;
-    }
-
-    private Account createAccount(User user, Currency currency) {
-        Account account = new Account();
-        account.setUser(user);
-        account.setCurrency(currency);
-        account.setCreatedAt(Instant.now());
-
-        return account;
     }
 }
