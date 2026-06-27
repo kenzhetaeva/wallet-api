@@ -27,7 +27,7 @@ public class AccountRepositoryTest extends PostgresContainerTest {
     private TestEntityManager entityManager;
 
     @Test
-    void shouldReturnAccountByIdAndUserId() {
+    void shouldReturnAccountWhenIdAndUserIdExists() {
 
         User user = TestDataFactory.createUser();
         entityManager.persist(user);
@@ -48,7 +48,15 @@ public class AccountRepositoryTest extends PostgresContainerTest {
     }
 
     @Test
-    void shouldReturnAccountsByUserId() {
+    void shouldReturnEmptyWhenIdAndUserIdDoesNotExist() {
+
+        Optional<Account> result = accountRepository.findByIdAndUserId(1L, 1L);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void shouldReturnAccountsWhenUserIdExists() {
 
         User user = TestDataFactory.createUser();
         entityManager.persist(user);
@@ -65,5 +73,13 @@ public class AccountRepositoryTest extends PostgresContainerTest {
         List<Account> result = accountRepository.findByUserId(user.getId());
 
         assertThat(result).hasSize(2);
+    }
+
+    @Test
+    void shouldReturnEmptyWhenUserIdDoesNotExist() {
+
+        List<Account> result = accountRepository.findByUserId(1L);
+
+        assertThat(result).hasSize(0);
     }
 }

@@ -26,7 +26,7 @@ public class RefreshTokenRepositoryTest extends PostgresContainerTest {
     private TestEntityManager entityManager;
 
     @Test
-    void shouldReturnRefreshTokenByHash() {
+    void shouldReturnRefreshTokenWhenTokenHashExists() {
 
         String hashedToken = "hashedToken";
 
@@ -45,5 +45,13 @@ public class RefreshTokenRepositoryTest extends PostgresContainerTest {
         assertThat(result.get().getId()).isEqualTo(refreshToken.getId());
         assertThat(result.get().getUser().getId()).isEqualTo(user.getId());
         assertThat(result.get().getTokenHash()).isEqualTo(hashedToken);
+    }
+
+    @Test
+    void shouldReturnEmptyWhenTokenHashDoesNotExist() {
+
+        Optional<RefreshToken> result = refreshTokenRepository.findByTokenHash("hashedToken");
+
+        assertThat(result).isEmpty();
     }
 }
