@@ -32,7 +32,7 @@ public class AccountRepositoryTest extends PostgresContainerTest {
         User user = TestDataFactory.createUser();
         entityManager.persist(user);
 
-        Account account = TestDataFactory.createAccount(user, Currency.USD);
+        Account account = TestDataFactory.createAccount(user);
         entityManager.persist(account);
 
         entityManager.flush();
@@ -61,7 +61,7 @@ public class AccountRepositoryTest extends PostgresContainerTest {
         User user = TestDataFactory.createUser();
         entityManager.persist(user);
 
-        Account accountFirst = TestDataFactory.createAccount(user, Currency.USD);
+        Account accountFirst = TestDataFactory.createAccount(user);
         entityManager.persist(accountFirst);
 
         Account accountSecond = TestDataFactory.createAccount(user, Currency.EUR);

@@ -37,6 +37,10 @@ public final class TestDataFactory {
         return refreshToken;
     }
 
+    public static Account createAccount(User user) {
+        return createAccount(user, Currency.USD);
+    }
+
     public static Account createAccount(User user, Currency currency) {
         Account account = new Account();
         account.setUser(user);
@@ -47,26 +51,31 @@ public final class TestDataFactory {
         return account;
     }
 
-    public static Transaction createTransaction(Account account) {
-        return createTransaction(account, BigDecimal.valueOf(100));
-    }
-
     public static Transaction createTransaction(Account account, BigDecimal amount) {
-        return createTransaction(account, amount, TransactionStatus.COMPLETED, Instant.now());
+        return createTransaction(
+                account,
+                null,
+                amount,
+                TransactionStatus.COMPLETED,
+                TransactionType.WITHDRAW,
+                Instant.now()
+        );
     }
 
     public static Transaction createTransaction(
-            Account account,
+            Account fromAccount,
+            Account toAccount,
             BigDecimal amount,
             TransactionStatus status,
+            TransactionType type,
             Instant createdAt
     ) {
         Transaction transaction = new Transaction();
-        transaction.setFromAccount(account);
-        transaction.setToAccount(null);
+        transaction.setFromAccount(fromAccount);
+        transaction.setToAccount(toAccount);
         transaction.setAmount(amount);
         transaction.setStatus(status);
-        transaction.setType(TransactionType.WITHDRAW);
+        transaction.setType(type);
         transaction.setCreatedAt(createdAt);
 
         return transaction;

@@ -1,5 +1,6 @@
 package com.aidana.wallet_api.repository;
 
+import com.aidana.wallet_api.DTO.projection.AccountStatisticsProjection;
 import com.aidana.wallet_api.DTO.projection.TopUserProjection;
 import com.aidana.wallet_api.config.PostgresContainerTest;
 import com.aidana.wallet_api.entity.Account;
@@ -7,6 +8,7 @@ import com.aidana.wallet_api.entity.Transaction;
 import com.aidana.wallet_api.entity.User;
 import com.aidana.wallet_api.enums.Currency;
 import com.aidana.wallet_api.enums.TransactionStatus;
+import com.aidana.wallet_api.enums.TransactionType;
 import com.aidana.wallet_api.util.TestDataFactory;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,11 +40,12 @@ public class TransactionRepositoryTest extends PostgresContainerTest {
         User user = TestDataFactory.createUser();
         entityManager.persist(user);
 
-        Account account = TestDataFactory.createAccount(user, Currency.USD);
+        Account account = TestDataFactory.createAccount(user);
         entityManager.persist(account);
 
         for (int i = 0; i < 5; i++) {
-            Transaction transaction = TestDataFactory.createTransaction(account);
+            Transaction transaction =
+                    TestDataFactory.createTransaction(account, BigDecimal.valueOf(100));
             entityManager.persist(transaction);
         }
 
@@ -83,65 +86,72 @@ public class TransactionRepositoryTest extends PostgresContainerTest {
         entityManager.persist(userF);
 
         // Accounts
-        Account accountA = TestDataFactory.createAccount(userA, Currency.USD);
+        Account accountA = TestDataFactory.createAccount(userA);
         entityManager.persist(accountA);
 
-        Account accountB = TestDataFactory.createAccount(userB, Currency.USD);
+        Account accountB = TestDataFactory.createAccount(userB);
         entityManager.persist(accountB);
 
         Account accountC = TestDataFactory.createAccount(userC, Currency.EUR);
         entityManager.persist(accountC);
 
-        Account accountD = TestDataFactory.createAccount(userD, Currency.USD);
+        Account accountD = TestDataFactory.createAccount(userD);
         entityManager.persist(accountD);
 
-        Account accountF = TestDataFactory.createAccount(userF, Currency.USD);
+        Account accountF = TestDataFactory.createAccount(userF);
         entityManager.persist(accountF);
 
         // Transactions
-        // Transaction of User & Account A
+
+        // Transactions of User & Account A
         Transaction transactionA1 = TestDataFactory.createTransaction(
                 accountA,
                 BigDecimal.valueOf(100)
         );
         entityManager.persist(transactionA1);
+
         Transaction transactionA2 = TestDataFactory.createTransaction(
                 accountA,
                 BigDecimal.valueOf(200)
         );
         entityManager.persist(transactionA2);
+
         Transaction transactionA3 = TestDataFactory.createTransaction(
                 accountA,
+                null,
                 BigDecimal.valueOf(200),
                 TransactionStatus.FAILED,
+                TransactionType.WITHDRAW,
                 Instant.now()
         );
         entityManager.persist(transactionA3);
 
-        // Transaction of User & Account B
+        // Transactions of User & Account B
         Transaction transactionB1 = TestDataFactory.createTransaction(
                 accountB,
                 BigDecimal.valueOf(150)
         );
         entityManager.persist(transactionB1);
 
-        // Transaction of User & Account C
+        // Transactions of User & Account C
         Transaction transactionC1 = TestDataFactory.createTransaction(
                 accountC,
                 BigDecimal.valueOf(1000)
         );
         entityManager.persist(transactionC1);
 
-        // Transaction of User & Account D
+        // Transactions of User & Account D
         Transaction transactionD1 = TestDataFactory.createTransaction(
                 accountD,
+                null,
                 BigDecimal.valueOf(1000),
                 TransactionStatus.COMPLETED,
+                TransactionType.WITHDRAW,
                 Instant.now().minus(2, ChronoUnit.DAYS)
         );
         entityManager.persist(transactionD1);
 
-        // Transaction of User & Account F
+        // Transactions of User & Account F
         Transaction transactionF1 = TestDataFactory.createTransaction(
                 accountF,
                 BigDecimal.valueOf(100)
@@ -164,5 +174,105 @@ public class TransactionRepositoryTest extends PostgresContainerTest {
         assertThat(page.getContent().get(0).getTotalTransferred()).isEqualTo("300.00");
         assertThat(page.getContent().get(1).getEmail()).isEqualTo(userB.getEmail());
         assertThat(page.getContent().get(1).getTotalTransferred()).isEqualTo("150.00");
+    }
+
+    @Test
+    void shouldReturnTransactionStatisticsOfAccount() {
+
+        // Users
+        User userA = TestDataFactory.createUser();
+        entityManager.persist(userA);
+
+        User userB = TestDataFactory.createUser();
+        entityManager.persist(userB);
+
+        // Accounts
+        Account accountA = TestDataFactory.createAccount(userA);
+        entityManager.persist(accountA);
+
+        Account accountB = TestDataFactory.createAccount(userB);
+        entityManager.persist(accountB);
+
+        // Transactions
+
+        // Transactions of User & Account A
+
+        // Deposit transaction 1
+        Transaction transactionA1 = TestDataFactory.createTransaction(
+                null,
+                accountA,
+                BigDecimal.valueOf(500),
+                TransactionStatus.COMPLETED,
+                TransactionType.DEPOSIT,
+                Instant.now()
+        );
+        entityManager.persist(transactionA1);
+
+        // Deposit transaction 2
+        Transaction transactionA2 = TestDataFactory.createTransaction(
+                null,
+                accountA,
+                BigDecimal.valueOf(600),
+                TransactionStatus.COMPLETED,
+                TransactionType.DEPOSIT,
+                Instant.now()
+        );
+        entityManager.persist(transactionA2);
+
+        // Deposit transaction 3
+        Transaction transactionA3 = TestDataFactory.createTransaction(
+                null,
+                accountA,
+                BigDecimal.valueOf(500),
+                TransactionStatus.FAILED,
+                TransactionType.DEPOSIT,
+                Instant.now()
+        );
+        entityManager.persist(transactionA3);
+
+        // Withdraw transaction 1
+        Transaction transactionA4 = TestDataFactory.createTransaction(
+                null,
+                accountA,
+                BigDecimal.valueOf(500),
+                TransactionStatus.COMPLETED,
+                TransactionType.WITHDRAW,
+                Instant.now()
+        );
+        entityManager.persist(transactionA4);
+
+        // Transfer transaction 1
+        Transaction transactionA5 = TestDataFactory.createTransaction(
+                accountA,
+                accountB,
+                BigDecimal.valueOf(300),
+                TransactionStatus.COMPLETED,
+                TransactionType.TRANSFER,
+                Instant.now()
+        );
+        entityManager.persist(transactionA5);
+
+        // Transaction of User & Account B
+        Transaction transactionB1 = TestDataFactory.createTransaction(
+                null,
+                accountB,
+                BigDecimal.valueOf(200),
+                TransactionStatus.COMPLETED,
+                TransactionType.DEPOSIT,
+                Instant.now()
+        );
+        entityManager.persist(transactionB1);
+
+        entityManager.flush();
+        entityManager.clear();
+
+        AccountStatisticsProjection result = transactionRepository.getAccountStatistics(
+                accountA.getId()
+        );
+
+        assertThat(result.getTotalDeposits()).isEqualTo("1100.00");
+        assertThat(result.getTotalWithdrawals()).isEqualTo("500.00");
+        assertThat(result.getTotalTransfers()).isEqualTo("300.00");
+        assertThat(result.getTransactionCount()).isEqualTo(4);
     }
 }
