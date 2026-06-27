@@ -79,6 +79,9 @@ public class TransactionRepositoryTest extends PostgresContainerTest {
         User userD = TestDataFactory.createUser();
         entityManager.persist(userD);
 
+        User userF = TestDataFactory.createUser();
+        entityManager.persist(userF);
+
         // Accounts
         Account accountA = TestDataFactory.createAccount(userA, Currency.USD);
         entityManager.persist(accountA);
@@ -89,8 +92,11 @@ public class TransactionRepositoryTest extends PostgresContainerTest {
         Account accountC = TestDataFactory.createAccount(userC, Currency.EUR);
         entityManager.persist(accountC);
 
-        Account accountD = TestDataFactory.createAccount(userC, Currency.USD);
+        Account accountD = TestDataFactory.createAccount(userD, Currency.USD);
         entityManager.persist(accountD);
+
+        Account accountF = TestDataFactory.createAccount(userF, Currency.USD);
+        entityManager.persist(accountF);
 
         // Transactions
         // Transaction of User & Account A
@@ -134,6 +140,13 @@ public class TransactionRepositoryTest extends PostgresContainerTest {
                 Instant.now().minus(2, ChronoUnit.DAYS)
         );
         entityManager.persist(transactionD1);
+
+        // Transaction of User & Account F
+        Transaction transactionF1 = TestDataFactory.createTransaction(
+                accountF,
+                BigDecimal.valueOf(100)
+        );
+        entityManager.persist(transactionF1);
 
         entityManager.flush();
         entityManager.clear();
