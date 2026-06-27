@@ -18,6 +18,7 @@ import com.aidana.wallet_api.exception.InvalidAccountsException;
 import com.aidana.wallet_api.repository.AccountRepository;
 import com.aidana.wallet_api.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -214,13 +215,13 @@ public class TransactionService {
         Instant fromInstant = from.atStartOfDay(ZoneOffset.UTC).toInstant();
         Instant toInstant = to.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
 
-        List<TopUserProjection> users = transactionRepository.findTopUsers(
+        Page<TopUserProjection> users = transactionRepository.findTopUsers(
                 currency.toString(),
                 fromInstant,
                 toInstant,
                 PageRequest.of(0, limit)
         );
 
-        return new TopUsersResponse(currency, fromInstant, toInstant, users);
+        return new TopUsersResponse(currency, fromInstant, toInstant, users.getContent());
     }
 }
