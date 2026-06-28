@@ -96,6 +96,31 @@ public class TransactionControllerTest extends PostgresContainerTest {
         assertThat(transactionRepository.findAll()).hasSize(0);
     }
 
+    @Test
+    void shouldReturn400WhenAmountIsInvalid() throws Exception {
+
+        User user = userRepository.save(TestDataFactory.createUser());
+
+        Account account = TestDataFactory.createAccount(user);
+        account.setBalance(BigDecimal.valueOf(1000));
+        account = accountRepository.save(account);
+
+        WithdrawRequest request = new WithdrawRequest();
+        request.setAmount(BigDecimal.valueOf(100.9999));
+
+        mockMvc.perform(post("/accounts/{accountId}/withdraw", account.getId())
+                        .header(HttpHeaders.AUTHORIZATION, createToken(user))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(status().is4xxClientError());
+
+        Account updatedAccount = accountRepository.findById(account.getId()).orElseThrow();
+
+        assertThat(updatedAccount.getBalance()).isEqualTo("1000.00");
+        assertThat(transactionRepository.findAll()).hasSize(0);
+    }
+
     private String createToken(User user) {
         return "Bearer " + jwtService.generateAccessToken(user);
     }
