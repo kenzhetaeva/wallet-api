@@ -1,7 +1,6 @@
 package com.aidana.wallet_api.controller;
 
 import com.aidana.wallet_api.DTO.request.WithdrawRequest;
-import com.aidana.wallet_api.DTO.response.TransactionResponse;
 import com.aidana.wallet_api.config.PostgresContainerTest;
 import com.aidana.wallet_api.entity.Account;
 import com.aidana.wallet_api.entity.Transaction;
@@ -10,7 +9,6 @@ import com.aidana.wallet_api.repository.AccountRepository;
 import com.aidana.wallet_api.repository.TransactionRepository;
 import com.aidana.wallet_api.repository.UserRepository;
 import com.aidana.wallet_api.service.JwtService;
-import com.aidana.wallet_api.service.TransactionService;
 import com.aidana.wallet_api.util.TestDataFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -25,7 +23,6 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.List;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -44,9 +41,6 @@ public class TransactionControllerTest extends PostgresContainerTest {
 
     @Autowired
     JwtService jwtService;
-
-    @Autowired
-    TransactionService transactionService;
 
     @Autowired
     UserRepository userRepository;
