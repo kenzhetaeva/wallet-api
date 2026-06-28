@@ -19,6 +19,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -31,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Transactional
 public class TransactionControllerTest extends PostgresContainerTest {
 
     @Autowired
@@ -72,7 +74,7 @@ public class TransactionControllerTest extends PostgresContainerTest {
 
         Account updatedAccount = accountRepository.findById(account.getId()).orElseThrow();
 
-        assertThat(updatedAccount.getBalance()).isEqualTo("900.00");
+        assertThat(updatedAccount.getBalance()).isEqualByComparingTo(BigDecimal.valueOf(900));
         assertThat(transactionRepository.findAll()).hasSize(1);
     }
 
@@ -96,7 +98,7 @@ public class TransactionControllerTest extends PostgresContainerTest {
 
         Account updatedAccount = accountRepository.findById(account.getId()).orElseThrow();
 
-        assertThat(updatedAccount.getBalance()).isEqualTo("1000.00");
+        assertThat(updatedAccount.getBalance()).isEqualByComparingTo(BigDecimal.valueOf(1000));
         assertThat(transactionRepository.findAll()).hasSize(0);
     }
 
@@ -121,7 +123,7 @@ public class TransactionControllerTest extends PostgresContainerTest {
 
         Account updatedAccount = accountRepository.findById(account.getId()).orElseThrow();
 
-        assertThat(updatedAccount.getBalance()).isEqualTo("1000.00");
+        assertThat(updatedAccount.getBalance()).isEqualByComparingTo(BigDecimal.valueOf(1000));
         assertThat(transactionRepository.findAll()).hasSize(0);
     }
 
@@ -150,10 +152,16 @@ public class TransactionControllerTest extends PostgresContainerTest {
 
         String csv = result.getResponse().getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(csv).isEqualTo("""
+        String expected = String.format(
+                """
                 id,fromAccountId,toAccountId,amount,status,type,createdAt
-                1,1,null,100.00,COMPLETED,WITHDRAW,2026-06-28T12:00:00Z
-                """);
+                %d,%d,null,100,COMPLETED,WITHDRAW,2026-06-28T12:00:00Z
+                """,
+                transaction.getId(),
+                account.getId()
+        );
+
+        assertThat(csv).isEqualTo(expected);
     }
 
     private String createToken(User user) {

@@ -10,6 +10,7 @@ import com.aidana.wallet_api.repository.AccountRepository;
 import com.aidana.wallet_api.repository.TransactionRepository;
 import com.aidana.wallet_api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -63,7 +64,11 @@ public class AccountService {
                 .toList();
     }
 
+    @Cacheable(value = "accounts", key = "#accountId")
     public AccountResponse getAccount(Long accountId, Long userId) {
+
+        System.out.println("Loading from DB");
+
         Account account = accountRepository.findByIdAndUserId(accountId, userId)
                 .orElseThrow(() -> new NoSuchElementException("Account not found"));
 

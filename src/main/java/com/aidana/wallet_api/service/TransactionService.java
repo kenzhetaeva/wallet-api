@@ -18,6 +18,8 @@ import com.aidana.wallet_api.exception.InvalidAccountsException;
 import com.aidana.wallet_api.repository.AccountRepository;
 import com.aidana.wallet_api.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -109,6 +111,7 @@ public class TransactionService {
         return csv.toString().getBytes(StandardCharsets.UTF_8);
     }
 
+    @CacheEvict(value = "accounts", key = "#accountId")
     public TransactionResponse deposit(Long accountId, DepositRequest request) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new NoSuchElementException("Account not found"));
@@ -134,6 +137,7 @@ public class TransactionService {
         return new TransactionResponse(transaction);
     }
 
+    @CacheEvict(value = "accounts", key = "#accountId")
     public TransactionResponse withdraw(Long accountId, Long userId, WithdrawRequest request) {
         Account account = accountRepository.findByIdAndUserId(accountId, userId)
                 .orElseThrow(() -> new NoSuchElementException("Account not found"));
@@ -163,6 +167,10 @@ public class TransactionService {
         return new TransactionResponse(transaction);
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "accounts", key = "#request.fromAccountId"),
+            @CacheEvict(value = "accounts", key = "#request.toAccountId")
+    })
     public TransactionResponse transfer(Long userId, TransferRequest request) {
         if (Objects.equals(request.getFromAccountId(), request.getToAccountId())) {
             throw new InvalidAccountsException();
