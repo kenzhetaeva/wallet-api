@@ -1,13 +1,16 @@
 package com.aidana.wallet_api.controller;
 
 import com.aidana.wallet_api.DTO.request.WithdrawRequest;
+import com.aidana.wallet_api.DTO.response.TransactionResponse;
 import com.aidana.wallet_api.config.PostgresContainerTest;
 import com.aidana.wallet_api.entity.Account;
+import com.aidana.wallet_api.entity.Transaction;
 import com.aidana.wallet_api.entity.User;
 import com.aidana.wallet_api.repository.AccountRepository;
 import com.aidana.wallet_api.repository.TransactionRepository;
 import com.aidana.wallet_api.repository.UserRepository;
 import com.aidana.wallet_api.service.JwtService;
+import com.aidana.wallet_api.service.TransactionService;
 import com.aidana.wallet_api.util.TestDataFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -17,13 +20,17 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.List;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -37,6 +44,9 @@ public class TransactionControllerTest extends PostgresContainerTest {
 
     @Autowired
     JwtService jwtService;
+
+    @Autowired
+    TransactionService transactionService;
 
     @Autowired
     UserRepository userRepository;
@@ -119,6 +129,37 @@ public class TransactionControllerTest extends PostgresContainerTest {
 
         assertThat(updatedAccount.getBalance()).isEqualTo("1000.00");
         assertThat(transactionRepository.findAll()).hasSize(0);
+    }
+
+    @Test
+    void shouldReturnExportFile() throws Exception {
+
+        User user = userRepository.save(TestDataFactory.createUser());
+
+        Account account = accountRepository.save(TestDataFactory.createAccount(user));
+
+        Transaction transaction = TestDataFactory.createTransaction(account, BigDecimal.valueOf(100));
+        transaction.setCreatedAt(Instant.parse("2026-06-28T12:00:00Z"));
+        transactionRepository.save(transaction);
+
+        MvcResult result = mockMvc.perform(
+                get("/accounts/{accountId}/transactions/export", account.getId())
+                        .header(HttpHeaders.AUTHORIZATION, createToken(user))
+        )
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, "text/csv"))
+                .andExpect(header().string(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=transactions.csv"
+                ))
+                .andReturn();
+
+        String csv = result.getResponse().getContentAsString(StandardCharsets.UTF_8);
+
+        assertThat(csv).isEqualTo("""
+                id,fromAccountId,toAccountId,amount,status,type,createdAt
+                1,1,null,100.00,COMPLETED,WITHDRAW,2026-06-28T12:00:00Z
+                """);
     }
 
     private String createToken(User user) {
