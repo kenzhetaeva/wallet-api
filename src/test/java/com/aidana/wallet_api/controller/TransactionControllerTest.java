@@ -72,6 +72,30 @@ public class TransactionControllerTest extends PostgresContainerTest {
         assertThat(transactionRepository.findAll()).hasSize(1);
     }
 
+    @Test
+    void shouldReturn401WhenTokenIsMissing() throws Exception {
+
+        User user = userRepository.save(TestDataFactory.createUser());
+
+        Account account = TestDataFactory.createAccount(user);
+        account.setBalance(BigDecimal.valueOf(1000));
+        account = accountRepository.save(account);
+
+        WithdrawRequest request = new WithdrawRequest();
+        request.setAmount(BigDecimal.valueOf(100));
+
+        mockMvc.perform(post("/accounts/{accountId}/withdraw", account.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(status().is4xxClientError());
+
+        Account updatedAccount = accountRepository.findById(account.getId()).orElseThrow();
+
+        assertThat(updatedAccount.getBalance()).isEqualTo("1000.00");
+        assertThat(transactionRepository.findAll()).hasSize(0);
+    }
+
     private String createToken(User user) {
         return "Bearer " + jwtService.generateAccessToken(user);
     }
