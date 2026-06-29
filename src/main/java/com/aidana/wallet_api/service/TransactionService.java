@@ -15,6 +15,8 @@ import com.aidana.wallet_api.exception.AccountBlockedException;
 import com.aidana.wallet_api.exception.CurrencyMismatchException;
 import com.aidana.wallet_api.exception.InsufficientBalanceException;
 import com.aidana.wallet_api.exception.InvalidAccountsException;
+import com.aidana.wallet_api.kafka.event.TransactionEvent;
+import com.aidana.wallet_api.kafka.producer.TransactionProducer;
 import com.aidana.wallet_api.repository.AccountRepository;
 import com.aidana.wallet_api.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +42,7 @@ public class TransactionService {
 
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
+    private final TransactionProducer producer;
 
     public TransactionResponse getTransaction(Long userId, Long transactionId) {
         Transaction transaction = transactionRepository.findById(transactionId)
@@ -133,6 +136,7 @@ public class TransactionService {
         transaction.setCreatedAt(Instant.now());
 
         transactionRepository.save(transaction);
+        sendKafkaMessage(transaction);
 
         return new TransactionResponse(transaction);
     }
@@ -163,6 +167,7 @@ public class TransactionService {
         transaction.setCreatedAt(Instant.now());
 
         transactionRepository.save(transaction);
+        sendKafkaMessage(transaction);
 
         return new TransactionResponse(transaction);
     }
@@ -210,6 +215,7 @@ public class TransactionService {
         transaction.setCreatedAt(Instant.now());
 
         transactionRepository.save(transaction);
+        sendKafkaMessage(transaction);
 
         return new TransactionResponse(transaction);
     }
@@ -231,5 +237,15 @@ public class TransactionService {
         );
 
         return new TopUsersResponse(currency, fromInstant, toInstant, users.getContent());
+    }
+
+    private void sendKafkaMessage(Transaction transaction) {
+
+        producer.send(new TransactionEvent(
+                transaction.getId(),
+                transaction.getFromAccount() != null ? transaction.getFromAccount().getId() : null,
+                transaction.getToAccount() != null ? transaction.getToAccount().getId() : null,
+                transaction.getAmount()
+        ));
     }
 }

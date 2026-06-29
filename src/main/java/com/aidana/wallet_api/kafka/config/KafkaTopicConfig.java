@@ -1,4 +1,4 @@
-package com.aidana.wallet_api.config;
+package com.aidana.wallet_api.kafka.config;
 
 import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.context.annotation.Bean;
