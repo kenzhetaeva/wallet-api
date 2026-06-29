@@ -28,3 +28,4 @@ server:
 logging:
     level:
         org.springframework.cache: TRACE
+        org.springframework.data.redis: DEBUG

@@ -95,7 +95,10 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleException() {
+    public ResponseEntity<ErrorResponse> handleException(Exception e) {
+
+        System.out.println(e.getMessage());
+
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponse("Unexpected server error"));
