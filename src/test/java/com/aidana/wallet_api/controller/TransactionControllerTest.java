@@ -1,7 +1,7 @@
 package com.aidana.wallet_api.controller;
 
 import com.aidana.wallet_api.DTO.request.WithdrawRequest;
-import com.aidana.wallet_api.config.PostgresContainerTest;
+import com.aidana.wallet_api.config.IntegrationTestBase;
 import com.aidana.wallet_api.entity.Account;
 import com.aidana.wallet_api.entity.Transaction;
 import com.aidana.wallet_api.entity.User;
@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-public class TransactionControllerTest extends PostgresContainerTest {
+public class TransactionControllerTest extends IntegrationTestBase {
 
     @Autowired
     private MockMvc mockMvc;
