@@ -14,6 +14,8 @@ import com.aidana.wallet_api.exception.AccountBlockedException;
 import com.aidana.wallet_api.exception.CurrencyMismatchException;
 import com.aidana.wallet_api.exception.InsufficientBalanceException;
 import com.aidana.wallet_api.exception.InvalidAccountsException;
+import com.aidana.wallet_api.kafka.event.TransactionEvent;
+import com.aidana.wallet_api.kafka.producer.TransactionProducer;
 import com.aidana.wallet_api.repository.AccountRepository;
 import com.aidana.wallet_api.repository.TransactionRepository;
 import org.junit.jupiter.api.Test;
@@ -41,6 +43,9 @@ public class TransactionServiceTest {
 
     @Mock
     private TransactionRepository transactionRepository;
+
+    @Mock
+    private TransactionProducer producer;
 
     @InjectMocks
     private TransactionService transactionService;
@@ -160,6 +165,7 @@ public class TransactionServiceTest {
         Long accountId = 1L;
         DepositRequest request = depositRequest();
         Account account = account(BigDecimal.valueOf(500), null, null);
+        TransactionEvent event = transactionEvent(request.getAmount());
 
         when(accountRepository.findById(accountId))
                 .thenReturn(Optional.of(account));
@@ -177,6 +183,8 @@ public class TransactionServiceTest {
         assertEquals(TransactionStatus.COMPLETED, transaction.getStatus());
         assertEquals(TransactionType.DEPOSIT, transaction.getType());
         assertNotNull(transaction.getCreatedAt());
+
+        verify(producer).send(event);
     }
 
     @Test
@@ -249,6 +257,7 @@ public class TransactionServiceTest {
 
         WithdrawRequest request = withdrawRequest();
         Account account = account(BigDecimal.valueOf(500), null, null);
+        TransactionEvent event = transactionEvent(request.getAmount());
 
         when(accountRepository.findByIdAndUserId(accountId, userId))
                 .thenReturn(Optional.of(account));
@@ -266,6 +275,8 @@ public class TransactionServiceTest {
         assertEquals(TransactionStatus.COMPLETED, transaction.getStatus());
         assertEquals(TransactionType.WITHDRAW, transaction.getType());
         assertNotNull(transaction.getCreatedAt());
+
+        verify(producer).send(event);
     }
 
     @Test
@@ -374,6 +385,7 @@ public class TransactionServiceTest {
         TransferRequest request = transferRequest(2L);
         Account fromAccount = account(BigDecimal.valueOf(500), Currency.EUR, null);
         Account toAccount = account(BigDecimal.valueOf(100), Currency.EUR, null);
+        TransactionEvent event = transactionEvent(request.getAmount());
 
         when(accountRepository.findByIdAndUserId(request.getFromAccountId(), userId))
                 .thenReturn(Optional.of(fromAccount));
@@ -394,6 +406,8 @@ public class TransactionServiceTest {
         assertEquals(TransactionStatus.COMPLETED, transaction.getStatus());
         assertEquals(TransactionType.TRANSFER, transaction.getType());
         assertNotNull(transaction.getCreatedAt());
+
+        verify(producer).send(event);
     }
 
     @Test
@@ -563,5 +577,14 @@ public class TransactionServiceTest {
         account.setBlockedAt(blockedAt);
 
         return account;
+    }
+
+    private TransactionEvent transactionEvent(
+            BigDecimal amount
+    ) {
+        TransactionEvent event = new TransactionEvent();
+        event.setAmount(amount);
+
+        return event;
     }
 }
