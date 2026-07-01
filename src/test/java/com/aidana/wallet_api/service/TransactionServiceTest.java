@@ -157,6 +157,7 @@ public class TransactionServiceTest {
         verify(accountRepository).findById(accountId);
         verify(accountRepository).save(account);
         verify(transactionRepository).save(any(Transaction.class));
+        verify(producer).send(any(TransactionEvent.class));
     }
 
     @Test
@@ -165,7 +166,6 @@ public class TransactionServiceTest {
         Long accountId = 1L;
         DepositRequest request = depositRequest();
         Account account = account(BigDecimal.valueOf(500), null, null);
-        TransactionEvent event = transactionEvent(request.getAmount());
 
         when(accountRepository.findById(accountId))
                 .thenReturn(Optional.of(account));
@@ -184,7 +184,30 @@ public class TransactionServiceTest {
         assertEquals(TransactionType.DEPOSIT, transaction.getType());
         assertNotNull(transaction.getCreatedAt());
 
-        verify(producer).send(event);
+        verify(producer).send(any(TransactionEvent.class));
+    }
+
+    @Test
+    void shouldSendEventAfterSuccessfulCreationOfDepositTransaction() {
+
+        Long accountId = 1L;
+        DepositRequest request = depositRequest();
+        Account account = account(BigDecimal.valueOf(500), null, null);
+
+        when(accountRepository.findById(accountId))
+                .thenReturn(Optional.of(account));
+
+        TransactionResponse response = transactionService.deposit(accountId, request);
+
+        ArgumentCaptor<TransactionEvent> eventCaptor = ArgumentCaptor.forClass(TransactionEvent.class);
+        verify(producer).send(eventCaptor.capture());
+
+        TransactionEvent sentEvent = eventCaptor.getValue();
+
+        assertEquals(response.getId(), sentEvent.getTransactionId());
+        assertNull(sentEvent.getFromAccountId());
+        assertEquals(response.getToAccountId(), sentEvent.getToAccountId());
+        assertEquals(response.getAmount(), sentEvent.getAmount());
     }
 
     @Test
@@ -247,6 +270,7 @@ public class TransactionServiceTest {
         verify(accountRepository).findByIdAndUserId(accountId, userId);
         verify(accountRepository).save(account);
         verify(transactionRepository).save(any(Transaction.class));
+        verify(producer).send(any(TransactionEvent.class));
     }
 
     @Test
@@ -257,7 +281,6 @@ public class TransactionServiceTest {
 
         WithdrawRequest request = withdrawRequest();
         Account account = account(BigDecimal.valueOf(500), null, null);
-        TransactionEvent event = transactionEvent(request.getAmount());
 
         when(accountRepository.findByIdAndUserId(accountId, userId))
                 .thenReturn(Optional.of(account));
@@ -276,7 +299,32 @@ public class TransactionServiceTest {
         assertEquals(TransactionType.WITHDRAW, transaction.getType());
         assertNotNull(transaction.getCreatedAt());
 
-        verify(producer).send(event);
+        verify(producer).send(any(TransactionEvent.class));
+    }
+
+    @Test
+    void shouldSendEventAfterSuccessfulCreationOfWithdrawTransaction() {
+
+        Long accountId = 1L;
+        Long userId = 1L;
+
+        WithdrawRequest request = withdrawRequest();
+        Account account = account(BigDecimal.valueOf(500), null, null);
+
+        when(accountRepository.findByIdAndUserId(accountId, userId))
+                .thenReturn(Optional.of(account));
+
+        TransactionResponse response = transactionService.withdraw(accountId, userId, request);
+
+        ArgumentCaptor<TransactionEvent> eventCaptor = ArgumentCaptor.forClass(TransactionEvent.class);
+        verify(producer).send(eventCaptor.capture());
+
+        TransactionEvent sentEvent = eventCaptor.getValue();
+
+        assertEquals(response.getId(), sentEvent.getTransactionId());
+        assertEquals(response.getFromAccountId(), sentEvent.getFromAccountId());
+        assertNull(sentEvent.getToAccountId());
+        assertEquals(response.getAmount(), sentEvent.getAmount());
     }
 
     @Test
@@ -375,6 +423,7 @@ public class TransactionServiceTest {
         inOrder.verify(accountRepository).save(toAccount);
 
         verify(transactionRepository).save(any(Transaction.class));
+        verify(producer).send(any(TransactionEvent.class));
     }
 
     @Test
@@ -385,7 +434,6 @@ public class TransactionServiceTest {
         TransferRequest request = transferRequest(2L);
         Account fromAccount = account(BigDecimal.valueOf(500), Currency.EUR, null);
         Account toAccount = account(BigDecimal.valueOf(100), Currency.EUR, null);
-        TransactionEvent event = transactionEvent(request.getAmount());
 
         when(accountRepository.findByIdAndUserId(request.getFromAccountId(), userId))
                 .thenReturn(Optional.of(fromAccount));
@@ -407,7 +455,35 @@ public class TransactionServiceTest {
         assertEquals(TransactionType.TRANSFER, transaction.getType());
         assertNotNull(transaction.getCreatedAt());
 
-        verify(producer).send(event);
+        verify(producer).send(any(TransactionEvent.class));
+    }
+
+    @Test
+    void shouldSendEventAfterSuccessfulCreationOfTransferTransaction() {
+
+        Long userId = 1L;
+
+        TransferRequest request = transferRequest(2L);
+        Account fromAccount = account(BigDecimal.valueOf(500), Currency.EUR, null);
+        Account toAccount = account(BigDecimal.valueOf(100), Currency.EUR, null);
+
+        when(accountRepository.findByIdAndUserId(request.getFromAccountId(), userId))
+                .thenReturn(Optional.of(fromAccount));
+
+        when(accountRepository.findById(request.getToAccountId()))
+                .thenReturn(Optional.of(toAccount));
+
+        TransactionResponse response = transactionService.transfer(userId, request);
+
+        ArgumentCaptor<TransactionEvent> eventCaptor = ArgumentCaptor.forClass(TransactionEvent.class);
+        verify(producer).send(eventCaptor.capture());
+
+        TransactionEvent sentEvent = eventCaptor.getValue();
+
+        assertEquals(response.getId(), sentEvent.getTransactionId());
+        assertEquals(response.getFromAccountId(), sentEvent.getFromAccountId());
+        assertEquals(response.getToAccountId(), sentEvent.getToAccountId());
+        assertEquals(response.getAmount(), sentEvent.getAmount());
     }
 
     @Test
@@ -577,14 +653,5 @@ public class TransactionServiceTest {
         account.setBlockedAt(blockedAt);
 
         return account;
-    }
-
-    private TransactionEvent transactionEvent(
-            BigDecimal amount
-    ) {
-        TransactionEvent event = new TransactionEvent();
-        event.setAmount(amount);
-
-        return event;
     }
 }
