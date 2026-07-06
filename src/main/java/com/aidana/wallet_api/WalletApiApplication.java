@@ -12,13 +12,13 @@ import org.springframework.web.bind.annotation.RestController;
 @EnableCaching
 public class WalletApiApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(WalletApiApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(WalletApiApplication.class, args);
+    }
 
-	@GetMapping("/hello")
-	public String hello(@RequestParam(value = "name", defaultValue = "World") String name) {
-		return String.format("Hello %s", name);
-	}
+    @GetMapping("/hello")
+    public String hello(@RequestParam(value = "name", defaultValue = "World") String name) {
+        return String.format("Hello %s", name);
+    }
 
 }

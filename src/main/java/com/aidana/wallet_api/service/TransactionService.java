@@ -50,11 +50,11 @@ public class TransactionService {
 
         boolean isToAccountOwner =
                 transaction.getToAccount() != null &&
-                Objects.equals(transaction.getToAccount().getUser().getId(), userId);
+                        Objects.equals(transaction.getToAccount().getUser().getId(), userId);
 
         boolean isFromAccountOwner =
                 transaction.getFromAccount() != null &&
-                Objects.equals(transaction.getFromAccount().getUser().getId(), userId);
+                        Objects.equals(transaction.getFromAccount().getUser().getId(), userId);
 
         if (!isToAccountOwner && !isFromAccountOwner) {
             throw new NoSuchElementException("Transaction not found");

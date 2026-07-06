@@ -66,9 +66,9 @@ public class TransactionControllerTest extends IntegrationTestBase {
         request.setAmount(BigDecimal.valueOf(100));
 
         mockMvc.perform(post("/accounts/{accountId}/withdraw", account.getId())
-                .header(HttpHeaders.AUTHORIZATION, createToken(user))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .header(HttpHeaders.AUTHORIZATION, createToken(user))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.amount").value(100));
 
@@ -91,8 +91,8 @@ public class TransactionControllerTest extends IntegrationTestBase {
         request.setAmount(BigDecimal.valueOf(100));
 
         mockMvc.perform(post("/accounts/{accountId}/withdraw", account.getId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(status().is4xxClientError());
 
@@ -139,9 +139,9 @@ public class TransactionControllerTest extends IntegrationTestBase {
         transactionRepository.save(transaction);
 
         MvcResult result = mockMvc.perform(
-                get("/accounts/{accountId}/transactions/export", account.getId())
-                        .header(HttpHeaders.AUTHORIZATION, createToken(user))
-        )
+                        get("/accounts/{accountId}/transactions/export", account.getId())
+                                .header(HttpHeaders.AUTHORIZATION, createToken(user))
+                )
                 .andExpect(status().isOk())
                 .andExpect(header().string(HttpHeaders.CONTENT_TYPE, "text/csv"))
                 .andExpect(header().string(
@@ -154,9 +154,9 @@ public class TransactionControllerTest extends IntegrationTestBase {
 
         String expected = String.format(
                 """
-                id,fromAccountId,toAccountId,amount,status,type,createdAt
-                %d,%d,null,100,COMPLETED,WITHDRAW,2026-06-28T12:00:00Z
-                """,
+                        id,fromAccountId,toAccountId,amount,status,type,createdAt
+                        %d,%d,null,100,COMPLETED,WITHDRAW,2026-06-28T12:00:00Z
+                        """,
                 transaction.getId(),
                 account.getId()
         );

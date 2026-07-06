@@ -5,14 +5,17 @@ ALTER TABLE users
 
 UPDATE users
 SET first_name = COALESCE(NULLIF(split_part(name, ' ', 1), ''), name),
-    last_name = COALESCE(NULLIF(substring(name FROM position(' ' IN name) + 1), ''), name),
-    password = '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiVI6A6q1z3ZCn85/1ejiU3EDmvPuAa'
+    last_name  = COALESCE(NULLIF(substring(name FROM position(' ' IN name) + 1), ''), name),
+    password   = '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiVI6A6q1z3ZCn85/1ejiU3EDmvPuAa'
 WHERE first_name IS NULL
    OR last_name IS NULL
    OR password IS NULL;
 
 ALTER TABLE users
     ALTER COLUMN first_name SET NOT NULL,
-    ALTER COLUMN last_name SET NOT NULL,
-    ALTER COLUMN password SET NOT NULL,
-    DROP COLUMN name;
+ALTER
+COLUMN last_name SET NOT NULL,
+    ALTER
+COLUMN password SET NOT NULL,
+    DROP
+COLUMN name;

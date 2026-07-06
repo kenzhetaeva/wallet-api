@@ -77,7 +77,7 @@ public class AdminController {
             @RequestParam LocalDate from,
             @RequestParam LocalDate to,
             @RequestParam(defaultValue = "20") int limit
-        ) {
+    ) {
         return transactionService.getTopUsers(currency, from, to, limit);
     }
 }

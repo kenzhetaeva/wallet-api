@@ -7,8 +7,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest
 class WalletApiApplicationTests extends IntegrationTestBase {
 
-	@Test
-	void contextLoads() {
-	}
+    @Test
+    void contextLoads() {
+    }
 
 }
